@@ -9,8 +9,8 @@ export type GitItem = {
   name: string;
   path: string;
   type: string;
+  download_url?: string;
 };
-
 
 export async function getGithubFolder(
   path: string = ""
