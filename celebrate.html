@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Celebration</title>
+<style>
+    html, body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background: radial-gradient(circle at center,
+            #1a1c2f, #0d0f1c 70%);
+        height: 100vh;
+        width: 100vw;
+        font-family: Arial, sans-serif;
+    }
+
+    .balloon {
+        position: absolute;
+        bottom: -150px;
+        width: 40px;
+        height: 55px;
+        border-radius: 50%;
+        opacity: 0.9;
+        animation: rise 6s linear infinite;
+        box-shadow: inset -6px -10px 12px rgba(0,0,0,0.2);
+    }
+
+    .string {
+        position: absolute;
+        width: 2px;
+        height: 70px;
+        background: rgba(255,255,255,0.6);
+        bottom: -70px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    @keyframes rise {
+        0% { transform: translateY(0) rotate(0deg); }
+        100% { transform: translateY(-120vh) rotate(15deg); }
+    }
+
+    /* Confetti */
+    .confetti {
+        position: absolute;
+        width: 8px;
+        height: 14px;
+        opacity: 0.9;
+        animation: confettiFall 4s linear infinite;
+    }
+
+    @keyframes confettiFall {
+        0% { transform: translateY(0) rotate(0deg); }
+        100% { transform: translateY(120vh) rotate(360deg); }
+    }
+</style>
+</head>
+
+<body>
+
+<script>
+// MULTI-COLOURED REAL BALLOONS
+const balloonColors = [
+    "#ff4d4d", "#ff6ec7", "#ffd93d", "#6ef7ff",
+    "#7df57d", "#b76aff", "#ff914d"
+];
+
+// CONFETTI COLOURS
+const confettiColors = [
+    "#ff4d4d", "#ffcc00", "#4dff4d",
+    "#4da6ff", "#ff66cc", "#ffffff"
+];
+
+function createBalloon() {
+    const balloon = document.createElement("div");
+    balloon.className = "balloon";
+
+    // Random colour
+    balloon.style.background = balloonColors[Math.floor(Math.random() * balloonColors.length)];
+
+    // Random size
+    const size = Math.random() * 25 + 35;
+    balloon.style.width = size + "px";
+    balloon.style.height = (size * 1.3) + "px";
+
+    // Random position
+    balloon.style.left = Math.random() * 100 + "vw";
+
+    // Random animation speed
+    balloon.style.animationDuration = (Math.random() * 4 + 4) + "s";
+
+    // Add string
+    const string = document.createElement("div");
+    string.className = "string";
+    balloon.appendChild(string);
+
+    document.body.appendChild(balloon);
+
+    // Remove balloon after animation
+    setTimeout(() => balloon.remove(), 8000);
+}
+
+function createConfetti() {
+    const piece = document.createElement("div");
+    piece.className = "confetti";
+
+    // Color
+    piece.style.background = confettiColors[Math.floor(Math.random() * confettiColors.length)];
+
+    // Random starting point (top)
+    piece.style.left = Math.random() * 100 + "vw";
+    piece.style.top = "-20px";
+
+    // Random rotation speed
+    piece.style.animationDuration = (Math.random() * 2 + 2) + "s";
+
+    document.body.appendChild(piece);
+
+    setTimeout(() => piece.remove(), 5000);
+}
+
+// CONSTANT BALLOONS FROM EVERYWHERE
+setInterval(createBalloon, 180);
+
+// HEAVY CONFETTI RAIN
+setInterval(createConfetti, 60);
+</script>
+
+</body>
+</html>

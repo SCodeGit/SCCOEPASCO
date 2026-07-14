@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SCode EduTech Control Portal</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+*{
+  box-sizing:border-box;
+}
+
+body{
+  margin:0;
+  font-family:"Segoe UI", sans-serif;
+
+  background: radial-gradient(circle at top, #1e3a8a, #0f172a 70%);
+  color:white;
+}
+
+/* DESKTOP */
+.desktop{
+  width:100%;
+  min-height:100vh;
+}
+
+/* TOP BAR */
+.topbar{
+  position:fixed;
+  top:0;
+  width:100%;
+  height:55px;
+
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+
+  padding:0 18px;
+
+  background: rgba(255,255,255,0.06);
+  backdrop-filter: blur(16px);
+
+  border-bottom:1px solid rgba(255,255,255,0.12);
+}
+
+/* SEARCH */
+.search{
+  margin-top:80px;
+  display:flex;
+  justify-content:center;
+  padding:0 15px;
+}
+
+.search input{
+  width:100%;
+  max-width:420px;
+  padding:14px 18px;
+
+  border-radius:30px;
+  border:none;
+  outline:none;
+
+  background: rgba(255,255,255,0.1);
+  color:white;
+
+  box-shadow: 0 0 15px rgba(59,130,246,0.2);
+  transition:0.3s;
+}
+
+.search input:focus{
+  box-shadow: 0 0 25px rgba(59,130,246,0.5);
+}
+
+/* WINDOW */
+.window{
+  margin:25px auto;
+  width:95%;
+  max-width:850px;
+
+  border-radius:20px;
+  overflow:hidden;
+
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(20px);
+
+  border:1px solid rgba(255,255,255,0.15);
+
+  box-shadow:
+    0 10px 40px rgba(0,0,0,0.5),
+    0 0 40px rgba(59,130,246,0.15);
+}
+
+/* HEADER */
+.window-header{
+  padding:14px;
+  font-weight:600;
+
+  background: rgba(255,255,255,0.08);
+  border-bottom:1px solid rgba(255,255,255,0.12);
+}
+
+/* CONTENT */
+.window-content{
+  padding:16px;
+}
+
+/* GRID */
+.grid{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px,1fr));
+  gap:14px;
+}
+
+.card{
+  padding:16px;
+  border-radius:16px;
+
+  background: rgba(255,255,255,0.1);
+
+  text-align:center;
+
+  transition:0.3s;
+  backdrop-filter: blur(10px);
+}
+
+.card:hover{
+  transform:translateY(-5px) scale(1.02);
+  box-shadow:0 0 20px rgba(59,130,246,0.4);
+}
+
+.value{
+  font-size:26px;
+  font-weight:700;
+}
+
+/* FILE EXPLORER */
+.file-item{
+  padding:14px;
+  margin-bottom:10px;
+  border-radius:14px;
+
+  background: rgba(255,255,255,0.1);
+
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+
+  cursor:pointer;
+  transition:0.25s;
+}
+
+.file-item:hover{
+  background: rgba(59,130,246,0.25);
+  transform:translateX(4px);
+}
+
+.file-name{
+  font-size:14px;
+}
+
+.file-open{
+  font-size:12px;
+  opacity:0.7;
+}
+
+/* DUPLICATES */
+.duplicate{
+  background: rgba(255, 80, 80, 0.15);
+  border:1px solid rgba(255,80,80,0.4);
+}
+
+.duplicate-tag{
+  font-size:11px;
+  margin-left:6px;
+  color:#ff9aa2;
+}
+
+/* DOCK */
+.dock{
+  position:fixed;
+  bottom:12px;
+  left:50%;
+  transform:translateX(-50%);
+
+  display:flex;
+  gap:14px;
+
+  padding:12px 16px;
+
+  background: rgba(255,255,255,0.08);
+  border-radius:25px;
+
+  backdrop-filter: blur(18px);
+
+  box-shadow:0 0 25px rgba(59,130,246,0.2);
+}
+
+/* ICON */
+.icon{
+  width:48px;
+  height:48px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  border-radius:14px;
+
+  background: rgba(255,255,255,0.12);
+
+  font-size:20px;
+
+  cursor:pointer;
+  transition:0.25s;
+}
+
+.icon:hover{
+  transform:scale(1.15);
+  background: rgba(59,130,246,0.4);
+  box-shadow:0 0 15px rgba(59,130,246,0.6);
+}
+
+/* MOBILE */
+@media (max-width:500px){
+  .value{
+    font-size:22px;
+  }
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="desktop">
+
+  <div class="topbar">
+    <div>🚀 SCode EduTech</div>
+    <div id="time"></div>
+  </div>
+
+  <div class="search">
+    <input type="text" placeholder="Search system...">
+  </div>
+
+  <div class="window">
+    <div class="window-header">📊 Dashboard</div>
+
+
+<div class="window-content">
+
+  <div id="dashboardApp">
+    <div class="grid">
+      <div class="card">
+        <div>Total PDFs</div>
+        <div class="value" id="pdfCount">0</div>
+      </div>
+
+      <div class="card">
+        <div>Status</div>
+        <div class="value">Active</div>
+      </div>
+
+      <div class="card">
+        <div>Repository</div>
+        <div class="value">trial</div>
+      </div>
+
+      <div class="card">
+        <div>Duplicates</div>
+        <div class="value" id="duplicateCount">0</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="filesApp" style="display:none;">
+    <input id="fileSearch" placeholder="Search PDFs..." style="width:100%; padding:12px; border-radius:12px; border:none; margin-bottom:10px;">
+    <div id="fileList"></div>
+  </div>
+
+</div>
+
+
+  </div>
+
+  <div class="dock">
+    <div class="icon" onclick="openApp('dashboard')">📊</div>
+    <div class="icon" onclick="openApp('files')">📂</div>
+    <div class="icon">⚙️</div>
+    <div class="icon">☁️</div>
+  </div>
+
+</div>
+
+<script>
+function updateTime(){
+  document.getElementById("time").innerText =
+    new Date().toLocaleTimeString();
+}
+setInterval(updateTime,1000);
+updateTime();
+
+const owner="SCodeGit";
+const repo="trial";
+
+let allFiles=[];
+let duplicateMap={};
+
+function findDuplicates(files){
+  const map={}, dup={};
+  files.forEach(f=>{
+    if(map[f.name]){
+      map[f.name]++;
+      dup[f.name]=map[f.name];
+    } else map[f.name]=1;
+  });
+  return dup;
+}
+
+async function fetchFiles(){
+  try{
+    const res=await fetch(`https://api.github.com/repos/${owner}/${repo}/git/trees/main?recursive=1`);
+    const data=await res.json();
+
+    const pdfs=data.tree.filter(i=>i.path.toLowerCase().endsWith(".pdf"))
+    .map(i=>({
+      name:i.path.split("/").pop(),
+      url:`https://raw.githubusercontent.com/${owner}/${repo}/main/${i.path}`
+    }));
+
+    allFiles=pdfs;
+    duplicateMap=findDuplicates(pdfs);
+
+    pdfCount.innerText=pdfs.length;
+    duplicateCount.innerText=Object.keys(duplicateMap).length;
+
+    renderFiles(pdfs);
+
+  }catch{
+    pdfCount.innerText="Error";
+  }
+}
+
+function renderFiles(files){
+  fileList.innerHTML="";
+  files.forEach(f=>{
+    const dup=duplicateMap[f.name];
+
+    const div=document.createElement("div");
+    div.className="file-item"+(dup?" duplicate":"");
+
+    div.innerHTML=`
+      <div class="file-name">
+        📄 ${f.name}
+        ${dup?`<span class="duplicate-tag">⚠ ${dup}x</span>`:""}
+      </div>
+      <div class="file-open">Open</div>
+    `;
+
+    div.onclick=()=>window.open(f.url,"_blank");
+
+    fileList.appendChild(div);
+  });
+}
+
+document.addEventListener("input",e=>{
+  if(e.target.id==="fileSearch"){
+    const v=e.target.value.toLowerCase();
+    renderFiles(allFiles.filter(f=>f.name.toLowerCase().includes(v)));
+  }
+});
+
+function openApp(app){
+  dashboardApp.style.display="none";
+  filesApp.style.display="none";
+
+  const header=document.querySelector(".window-header");
+
+  if(app==="dashboard"){
+    header.innerText="📊 Dashboard";
+    dashboardApp.style.display="block";
+  }
+
+  if(app==="files"){
+    header.innerText="📂 File Explorer";
+    filesApp.style.display="block";
+  }
+}
+
+fetchFiles();
+</script>
+
+</body>
+</html>

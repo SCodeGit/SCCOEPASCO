@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contact – Colleges of Education Past Questions</title>
+
+  <meta name="description" content="Contact page for Colleges of Education Past Questions repository by SCode Studio. Submit your files or make inquiries.">
+  <meta name="author" content="SCode Studio">
+  <link rel="icon" href="ttag.png" type="image/png">
+
+  <style>
+    :root {
+      --navy: #0a1f44;
+      --light: #ffffff;
+      --accent: #1e3a8a;
+      --shadow: rgba(10, 31, 68, 0.25);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: var(--light);
+      color: var(--navy);
+      overflow-x: hidden;
+      position: relative;
+      min-height: 100vh;
+      text-align: center;
+      transition: background 0.4s, color 0.4s;
+    }
+
+    /* HEADER */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--navy);
+      padding: 12px 24px;
+      box-shadow: 0 4px 18px var(--shadow);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+
+    .top-logos {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .top-logos img {
+      width: 55px;
+      height: 55px;
+      border-radius: 50%;
+      border: 2px solid var(--light);
+      background: var(--light);
+    }
+
+    #theme-toggle {
+      background: none;
+      border: none;
+      font-size: 1.4rem;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    /* MAIN */
+    h1 {
+      font-size: 1.8rem;
+      color: var(--accent);
+      margin-top: 24px;
+      font-weight: 600;
+      animation: fadeInDown 1s ease;
+    }
+
+    .tagline {
+      font-style: italic;
+      font-size: 1.05rem;
+      color: #054a91;
+      margin-bottom: 24px;
+      animation: fadeInDown 1.5s ease;
+    }
+
+    main {
+      max-width: 700px;
+      margin: 2rem auto;
+      background: var(--light);
+      border: 3px solid var(--navy);
+      border-radius: 20px;
+      padding: 2rem;
+      box-shadow: 0 0 25px rgba(10,31,68,0.15);
+      position: relative;
+      animation: floatIn 1.3s ease;
+    }
+
+    .contact-frame {
+      text-align: left;
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+
+    .contact-frame p {
+      margin: 10px 0;
+    }
+
+    .whatsapp-link {
+      display: inline-block;
+      background: var(--accent);
+      color: var(--light);
+      text-decoration: none;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-weight: 600;
+      transition: transform 0.3s, background 0.3s;
+    }
+
+    .whatsapp-link:hover {
+      background: #0a1f44;
+      transform: scale(1.05);
+    }
+
+    .back-home {
+      display: inline-block;
+      background: var(--navy);
+      color: var(--light);
+      text-decoration: none;
+      padding: 10px 16px;
+      border-radius: 10px;
+      font-weight: 600;
+      margin-top: 1.5rem;
+      transition: transform 0.3s, background 0.3s;
+    }
+
+    .back-home:hover {
+      background: var(--accent);
+      transform: scale(1.05);
+    }
+
+    footer {
+      text-align: center;
+      font-size: 0.85rem;
+      color: #555;
+      margin-top: 2rem;
+      padding-bottom: 1rem;
+    }
+
+    /* ANIMATIONS */
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes floatIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* DARK THEME */
+    body[data-theme="dark"] {
+      background: #0a1f44;
+      color: #e9edf7;
+    }
+
+    body[data-theme="dark"] main {
+      background: rgba(12,24,54,0.95);
+      border: 3px solid #1e3a8a;
+    }
+
+    body[data-theme="dark"] .whatsapp-link {
+      background: #1e3a8a;
+      color: #fff;
+    }
+
+    body[data-theme="dark"] .back-home {
+      background: #1e3a8a;
+      color: #fff;
+    }
+
+    @media (max-width: 600px) {
+      header { flex-direction: column; gap: 10px; }
+      .top-logos img { width: 50px; height: 50px; }
+      main { margin: 1rem; padding: 1.2rem; }
+      h1 { font-size: 1.4rem; }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="top-logos">
+      <img src="https://raw.githubusercontent.com/SCodeGit/trial/main/WhatsApp%20Image%202025-10-29%20at%2021.31.34_5c11e8e8.jpg" alt="SCode Studio">
+      <img src="https://raw.githubusercontent.com/SCodeGit/trial/main/WhatsApp%20Image%202025-10-29%20at%2021.28.30_968e228b.jpg" alt="TTAG">
+      <img src="https://raw.githubusercontent.com/SCodeGit/trial/main/WhatsApp%20Image%202025-10-29%20at%2021.29.26_b1bcd9d3.jpg" alt="Peki College of Education">
+    </div>
+    <button id="theme-toggle" aria-label="Toggle theme">☀️</button>
+  </header>
+
+  <h1>Contact SCode Studio</h1>
+  <p class="tagline">Submit Your Past Questions or Make Enquiries</p>
+
+  <main>
+    <div class="contact-frame">
+      <p>If you’d like to share or request past questions, kindly reach out via WhatsApp:</p>
+
+      <p><a href="#" id="wa-link" class="whatsapp-link">💬 Tap to contact on WhatsApp</a></p>
+
+    <a href="index.html" class="back-home">← Back to Home</a>
+  </main>
+
+  <footer>
+    &copy; 2025 SCode Studio. All rights reserved.
+  </footer>
+
+  <script>
+    // ===== TEMPORARY LOCK (make contact page offline) =====
+    // To make public later, delete or comment out this block 👇
+    // if (window.location.pathname.includes('contact.html')) {
+    //   window.location.replace('index.html');
+    // }
+
+    // ===== THEME TOGGLE =====
+    const toggle = document.getElementById('theme-toggle');
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+      document.body.setAttribute('data-theme', savedTheme);
+      toggle.textContent = savedTheme === 'dark' ? '🌙' : '☀️';
+    }
+
+    toggle.addEventListener('click', () => {
+      const current = document.body.getAttribute('data-theme');
+      const newTheme = current === 'dark' ? 'light' : 'dark';
+      document.body.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+      toggle.textContent = newTheme === 'dark' ? '🌙' : '☀️';
+    });
+
+    // ===== HIDDEN WHATSAPP LINK =====
+    document.getElementById('wa-link').addEventListener('click', function(e) {
+      e.preventDefault();
+      const num = "233" + "209883339"; // Ghana country code + hidden format
+      const message = encodeURIComponent("Hello SCode Studio, I would like to upload past questions.");
+      window.open(`https://wa.me/${num}?text=${message}`, "_blank");
+    });
+  </script>
+</body>
+</html>
