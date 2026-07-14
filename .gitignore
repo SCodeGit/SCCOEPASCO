@@ -1,1 +1,20 @@
-*.pdf
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Node
+node_modules/
+.next/
+
+# Python
+venv/
+.venv/
+__pycache__/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db*.pdf
