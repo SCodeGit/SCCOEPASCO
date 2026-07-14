@@ -1,26 +1,367 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+
+/* ===============================
+   SCode Academic AI Global Theme
+   System Mode First
+================================ */
+
+
+:root{
+
+--background:#f3f6fb;
+
+--foreground:#0a1f44;
+
+--primary:#1e3a8a;
+
+--secondary:#041f66;
+
+--card:#ffffff;
+
+--border:#d7e2f2;
+
+--shadow:rgba(10,31,68,0.12);
+
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+
+@media (prefers-color-scheme: dark){
+
+:root{
+
+--background:#071427;
+
+--foreground:#ffffff;
+
+--primary:#2563eb;
+
+--secondary:#0a1f44;
+
+--card:#0c162b;
+
+--border:rgba(255,255,255,.15);
+
+--shadow:rgba(0,0,0,.5);
+
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+
+/* User override after system choice */
+
+html.dark{
+
+--background:#071427;
+
+--foreground:#ffffff;
+
+--primary:#2563eb;
+
+--secondary:#0a1f44;
+
+--card:#0c162b;
+
+--border:rgba(255,255,255,.15);
+
 }
+
+
+html.light{
+
+--background:#f3f6fb;
+
+--foreground:#0a1f44;
+
+--primary:#1e3a8a;
+
+--secondary:#041f66;
+
+--card:#ffffff;
+
+--border:#d7e2f2;
+
+}
+
+
+
+*{
+
+box-sizing:border-box;
+
+margin:0;
+
+padding:0;
+
+}
+
+
+
+body{
+
+color:var(--foreground);
+
+font-family:
+
+"Segoe UI",
+
+min-height:100vh;
+
+transition:
+
+background .3s ease,
+
+color .3s ease;
+
+}
+
+
+
+/* ===============================
+   Main Container
+================================ */
+
+
+main{
+
+width:100%;
+
+max-width:1100px;
+
+margin:auto;
+
+padding:20px;
+
+}
+
+
+
+/* ===============================
+   Header
+================================ */
+
+
+header{
+
+display:flex;
+
+justify-content:space-between;
+
+align-items:center;
+
+padding:15px;
+
+background:var(--card);
+
+border-radius:18px;
+
+border:1px solid var(--border);
+
+box-shadow:
+
+0 10px 30px var(--shadow);
+
+}
+
+
+
+header h1{
+
+font-size:1.7rem;
+
+font-weight:800;
+
+color:var(--primary);
+
+}
+
+
+
+/* ===============================
+   Buttons
+================================ */
+
+
+button{
+
+background:var(--primary);
+
+color:white;
+
+border:none;
+
+padding:12px 18px;
+
+border-radius:12px;
+
+font-weight:700;
+
+cursor:pointer;
+
+transition:.3s;
+
+}
+
+
+
+button:hover{
+
+transform:translateY(-2px);
+
+opacity:.9;
+
+}
+
+
+
+/* ===============================
+   Cards
+================================ */
+
+
+section{
+
+background:var(--card);
+
+border:1px solid var(--border);
+
+border-radius:20px;
+
+padding:25px;
+
+margin-top:25px;
+
+box-shadow:
+
+0 12px 30px var(--shadow);
+
+}
+
+
+
+section h2{
+
+margin-bottom:15px;
+
+}
+
+
+
+p{
+
+line-height:1.6;
+
+opacity:.85;
+
+}
+
+
+
+/* ===============================
+   Inputs
+================================ */
+
+
+input,
+textarea,
+select{
+
+width:100%;
+
+padding:14px;
+
+margin:10px 0;
+
+border-radius:12px;
+
+border:
+
+1px solid var(--border);
+
+background:var(--background);
+
+color:var(--foreground);
+
+}
+
+
+
+/* ===============================
+   AI Answer Area
+================================ */
+
+
+.answer{
+
+margin-top:20px;
+
+padding:20px;
+
+border-radius:15px;
+
+background:rgba(30,58,138,.08);
+
+line-height:1.7;
+
+}
+
+
+
+/* ===============================
+   Mobile First
+================================ */
+
+
+@media(max-width:600px){
+
+
+main{
+
+padding:12px;
+
+}
+
+
+header{
+
+flex-direction:column;
+
+gap:15px;
+
+text-align:center;
+
+}
+
+
+header h1{
+
+font-size:1.4rem;
+
+}
+
+
+
+section{
+
+padding:18px;
+
+border-radius:16px;
+
+}
+
+
+
+button{
+
+width:100%;
+
+}
+
+
+}Arial,
+Helvetica,
+sans-serif;
+
