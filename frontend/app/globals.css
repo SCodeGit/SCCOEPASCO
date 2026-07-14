@@ -393,8 +393,11 @@ color:white;
 transform:translateY(-3px);
 
 }
-backdrop-filter:blur(12px);
+.some-class{
 
+backdrop-filter: blur(12px);
+
+}
 
 
 
