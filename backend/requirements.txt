@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+python-dotenv
+pymongo
+motor
+httpx
+requests
+python-multipart
+pymupdf
+fireworks-ai
+pydantic
+cors
