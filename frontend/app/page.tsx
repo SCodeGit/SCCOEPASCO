@@ -1,149 +1,265 @@
 "use client";
 
-import { useTheme } from "@/components/ThemeProvider";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+import Header from "@/components/Header";
+import UniversitySelector from "@/components/UniversitySelector";
+import PDFGrid from "@/components/PDFGrid";
 import AIAssistant from "@/components/AIAssistant";
+import Footer from "@/components/Footer";
+
+
+type PDFItem = {
+  name:string;
+  path:string;
+  type?:string;
+};
+
 
 
 export default function Home(){
 
-const {theme,toggle}=useTheme();
 
-const [file,setFile]=useState<File|null>(null);
+const [pdfs,setPdfs]=useState<PDFItem[]>([]);
+
 const [answer,setAnswer]=useState("");
 
+const [loadingAI,setLoadingAI]=useState(false);
 
-async function submit(){
 
-if(!file){
+const [theme,setTheme]=useState<
+"system"|"light"|"dark"
+>("system");
 
-setAnswer("Please upload a file first");
-return;
+
+
+
+useEffect(()=>{
+
+
+const saved=
+localStorage.getItem("scode-theme");
+
+
+if(saved){
+
+setTheme(
+saved as "system"|"light"|"dark"
+);
 
 }
 
 
-const form=new FormData();
+},[]);
 
-form.append("file",file);
+
+
+
+
+
+useEffect(()=>{
+
+
+const root=
+document.documentElement;
+
+
+if(theme==="system"){
+
+root.removeAttribute(
+"data-theme"
+);
+
+
+}else{
+
+
+root.setAttribute(
+"data-theme",
+theme
+);
+
+
+}
+
+
+localStorage.setItem(
+"scode-theme",
+theme
+);
+
+
+
+},[theme]);
+
+
+
+
+
+
+
+async function solveAI(
+url:string,
+name:string
+){
+
+
+setLoadingAI(true);
+
+setAnswer("");
+
 
 
 try{
 
-const res=await fetch(
-`${process.env.NEXT_PUBLIC_API_URL}/api/solve`,
+
+const API=
+process.env.NEXT_PUBLIC_API_URL ||
+"https://scode-academic-ai.onrender.com";
+
+
+
+const res=
+await fetch(
+`${API}/api/solve`,
 {
+
 method:"POST",
-body:form
+
+headers:{
+"Content-Type":
+"application/json"
+
+
+body:JSON.stringify({
+
+
+pdf_url:url,
+
+filename:name
+
+})
+
+
 }
+
 );
 
 
-const data=await res.json();
+
+if(!res.ok){
+
+
+throw new Error(
+"AI server error"
+);
+
+}
+
+
+
+const data=
+await res.json();
+
 
 
 setAnswer(
-data.answer || JSON.stringify(data)
+data.answer ||
+"No answer generated"
 );
 
 
-}
 
-catch(error){
+}catch(error){
+
+
+console.error(error);
+
 
 setAnswer(
-"AI connection failed"
+"Unable to connect to AI service"
 );
 
-}
+
+
+}finally{
+
+
+setLoadingAI(false);
+
 
 }
+
+
+
+}
+
+
+
 
 
 
 return(
 
-<main>
+<main className="app">
 
 
-<header>
-
-<h1>
-SCode Academic AI
-</h1>
-
-
-<button onClick={toggle}>
-
-{
-theme==="dark"
-?
-"☀️ Light"
-:
-"🌙 Dark"
-}
-
-</button>
-
-
-</header>
-
-
-
-<section>
-
-
-<h2>
-Upload Academic Material
-</h2>
-
-
-<p>
-Upload PDF, slides, notes or academic documents.
-</p>
-
-
-
-<input
-
-type="file"
-
-accept=".pdf,.ppt,.pptx,.doc,.docx"
-
-onChange={
-(e)=>
-setFile(
-e.target.files?.[0] || null
-)
-}
-
+<Header
+theme={theme}
+setTheme={setTheme}
 />
 
 
 
-<button onClick={submit}>
-
-Solve With AI
-
-</button>
+<section className="repository">
 
 
+<h2>
+Past Questions
+</h2>
 
-<div className="answer-card">
 
-{answer}
+<UniversitySelector
+setPdfs={setPdfs}
+/>
 
-</div>
+
+
+<PDFGrid
+
+pdfs={pdfs}
+
+solveAI={solveAI}
+
+/>
+
 
 
 </section>
 
 
 
-<AIAssistant />
+
+
+<AIAssistant
+
+loadingAI={loadingAI}
+
+answer={answer}
+
+/>
+
+
+
+
+<Footer />
 
 
 </main>
-)
+
+
+);
+
+
 
 }
