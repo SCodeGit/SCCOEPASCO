@@ -10,14 +10,12 @@ type PDFItem = {
 
 
 interface Props {
-
   pdfs: PDFItem[];
 
   solveAI: (
     url: string,
     name: string
   ) => void;
-
 }
 
 
@@ -28,109 +26,93 @@ export default function PDFGrid({
 }: Props) {
 
 
-function openPDF(pdf: PDFItem){
+  function openPDF(pdf: PDFItem) {
 
-  const url = getPDFUrl(pdf.path);
+    const url = getPDFUrl(pdf.path);
 
-  window.open(
-    url,
-    "_blank"
+    window.open(
+      url,
+      "_blank"
+    );
+
+  }
+
+
+
+  if (pdfs.length === 0) {
+
+    return (
+      <div className="pdf-grid">
+
+        <p>
+          No PDF available. Select a programme to load past questions.
+        </p>
+
+      </div>
+    );
+
+  }
+
+
+
+  return (
+
+    <div className="pdf-grid">
+
+      {
+        pdfs.map((pdf) => (
+
+          <div
+            className="pdf-card"
+            key={pdf.path}
+          >
+
+            <h3>
+              📘 {pdf.name}
+            </h3>
+
+
+
+            <div className="actions">
+
+
+              <button
+                onClick={() => openPDF(pdf)}
+              >
+
+                Open PDF
+
+              </button>
+
+
+
+              <button
+                className="ai"
+                onClick={() =>
+                  solveAI(
+                    getPDFUrl(pdf.path),
+                    pdf.name
+                  )
+                }
+              >
+
+                🤖 Solve AI
+
+              </button>
+
+
+            </div>
+
+
+          </div>
+
+        ))
+      }
+
+
+    </div>
+
   );
 
-}
-
-
-
-return (
-
-<section className="pdf-section">
-
-
-<h2>
-Available Past Questions
-
-
-
-<div className="pdf-grid">
-
-
-{
-pdfs.length === 0 ?
-
-
-<p>
-No PDF selected yet.
-</p>
-
-:
-
-pdfs.map((pdf)=>(
-
-
-
-<div
-className="pdf-card"
-key={pdf.path}
->
-
-
-
-<h3>
-📘 {pdf.name}
-</h3>
-
-
-
-
-<div className="actions">
-
-
-<button
-onClick={()=>
-openPDF(pdf)
-}
->
-Open PDF
-</button>
-
-
-
-<button
-
-className="ai"
-
-onClick={()=>
-solveAI(
-getPDFUrl(pdf.path),
-pdf.name
-)
-}
-
->
-
-🤖 Solve AI
-
-</button>
-
-
-</div>
-
-
-</div>
-
-
-))
-
-}
-
-
-
-</div>
-
-
-</section>
-
-
-);
 
 }
