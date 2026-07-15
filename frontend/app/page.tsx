@@ -27,6 +27,7 @@ const [answer,setAnswer]=useState("");
 const [loadingAI,setLoadingAI]=useState(false);
 
 
+
 const [theme,setTheme]=useState<
 "system"|"light"|"dark"
 >("system");
@@ -34,17 +35,18 @@ const [theme,setTheme]=useState<
 
 
 
+
 useEffect(()=>{
 
 
-const saved=
+const savedTheme =
 localStorage.getItem("scode-theme");
 
 
-if(saved){
+if(savedTheme){
 
 setTheme(
-saved as "system"|"light"|"dark"
+savedTheme as "system"|"light"|"dark"
 );
 
 }
@@ -57,14 +59,17 @@ saved as "system"|"light"|"dark"
 
 
 
+
 useEffect(()=>{
 
 
-const root=
+const root =
 document.documentElement;
 
 
+
 if(theme==="system"){
+
 
 root.removeAttribute(
 "data-theme"
@@ -83,6 +88,7 @@ theme
 }
 
 
+
 localStorage.setItem(
 "scode-theme",
 theme
@@ -91,6 +97,7 @@ theme
 
 
 },[theme]);
+
 
 
 
@@ -113,59 +120,84 @@ setAnswer("");
 try{
 
 
-const API=
+const API =
 process.env.NEXT_PUBLIC_API_URL ||
 "https://scode-academic-ai.onrender.com";
 
 
 
-const res=
+
+const res =
 await fetch(
 `${API}/api/solve`,
 {
 
+
 method:"POST",
 
+
 headers:{
+
 "Content-Type":
-"application/json"
+"application/json",
+
+},
+
 
 
 body:JSON.stringify({
 
-
 pdf_url:url,
 
-filename:name
+filename:name,
 
-})
+}),
+
 
 
 }
-
 );
+
+
 
 
 
 if(!res.ok){
 
 
-throw new Error(
-"AI server error"
+const errorText =
+await res.text();
+
+
+console.error(
+"Backend response:",
+errorText
 );
+
+
+throw new Error(
+"AI request failed"
+);
+
 
 }
 
 
 
-const data=
+
+
+const data =
 await res.json();
 
 
 
+
 setAnswer(
+
 data.answer ||
+
 "No answer generated"
+
 );
 
 
@@ -173,11 +205,15 @@ data.answer ||
 }catch(error){
 
 
-console.error(error);
+console.error(
+"SCode AI Error:",
+error
+);
+
 
 
 setAnswer(
-"Unable to connect to AI service"
+"Unable to connect to AI server."
 );
 
 
@@ -199,29 +235,35 @@ setLoadingAI(false);
 
 
 
+
+
 return(
+
 
 <main className="app">
 
 
+
 <Header
+
 theme={theme}
+
 setTheme={setTheme}
+
 />
 
 
 
-<section className="repository">
-
-
-<h2>
-Past Questions
-</h2>
 
 
 <UniversitySelector
+
 setPdfs={setPdfs}
+
 />
+
+
+
 
 
 
@@ -235,19 +277,20 @@ solveAI={solveAI}
 
 
 
-</section>
-
 
 
 
 
 <AIAssistant
 
-loadingAI={loadingAI}
-
 answer={answer}
 
+loadingAI={loadingAI}
+
 />
+
+
+
 
 
 
@@ -255,11 +298,13 @@ answer={answer}
 <Footer />
 
 
+
+
 </main>
 
 
-);
 
+);
 
 
 }
