@@ -10,9 +10,9 @@ import Footer from "@/components/Footer";
 
 
 type PDFItem = {
-  name:string;
-  path:string;
-  type?:string;
+  name: string;
+  path: string;
+  type?: string;
 };
 
 
@@ -25,7 +25,6 @@ const [pdfs,setPdfs]=useState<PDFItem[]>([]);
 const [answer,setAnswer]=useState("");
 
 const [loadingAI,setLoadingAI]=useState(false);
-
 
 
 const [theme,setTheme]=useState<
@@ -105,6 +104,7 @@ theme
 
 
 
+
 async function solveAI(
 url:string,
 name:string
@@ -132,9 +132,7 @@ await fetch(
 `${API}/api/solve`,
 {
 
-
 method:"POST",
-
 
 headers:{
 
@@ -143,8 +141,6 @@ headers:{
 
 },
 
-
-
 body:JSON.stringify({
 
 pdf_url:url,
@@ -152,8 +148,6 @@ pdf_url:url,
 filename:name,
 
 }),
-
-
 
 }
 );
@@ -186,6 +180,8 @@ throw new Error(
 
 
 
+
+
 const data =
 await res.json();
 
@@ -202,7 +198,8 @@ data.answer ||
 
 
 
-}catch(error){
+}
+catch(error){
 
 
 console.error(
@@ -218,7 +215,8 @@ setAnswer(
 
 
 
-}finally{
+}
+finally{
 
 
 setLoadingAI(false);
@@ -229,6 +227,7 @@ setLoadingAI(false);
 
 
 }
+
 
 
 
@@ -267,6 +266,7 @@ setPdfs={setPdfs}
 
 
 
+
 <PDFGrid
 
 pdfs={pdfs}
@@ -274,6 +274,7 @@ pdfs={pdfs}
 solveAI={solveAI}
 
 />
+
 
 
 
@@ -296,6 +297,7 @@ loadingAI={loadingAI}
 
 
 <Footer />
+
 
 
 
