@@ -37,29 +37,29 @@ export default function Home() {
     setAnswer("");
 
     try {
-        `${process.env.NEXT_PUBLIC_AI_API}/api/solve`,
-
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-
-            pdf_url: url,
-            filename: name
-          })
-
-        }
-      );
+      // Stripping trailing slashes or /api prefixes if they accidentally leak in
+      const baseUrl = (process.env.NEXT_PUBLIC_AI_API || "https://scode-academic-ai-v2.onrender.com").replace(/\/+$/, "");
+      
+      // Changing from /api/solve to /solve to align with standard FastAPI routing rules
+      const response = await fetch(`${baseUrl}/solve`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          pdf_url: url,
+          filename: name
+        })
+      });
 
       if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error("Backend Error Response:", errorData);
         throw new Error("AI server request failed");
       }
 
-
       const data = await response.json();
-      setAnswer(data.answer || "No AI response returned.");
+      setAnswer(data.answer || data.solution || "No AI response returned.");
     } catch (error) {
       console.error("AI ERROR:", error);
       setAnswer("Unable to connect to SCode AI server.");
