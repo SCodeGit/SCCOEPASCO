@@ -228,3 +228,20 @@ footer {
     grid-template-columns: 1fr;
   }
 }
+/* Inline Style Cleanups */
+.main-title {
+  margin: 0;
+  font-size: 24px;
+}
+
+.download-item {
+  display: flex !important;
+  gap: 8px !important;
+  padding: 6px 0 !important;
+  align-items: center;
+}
+
+.download-text {
+  margin: 0 !important;
+  font-size: 13px;
+}

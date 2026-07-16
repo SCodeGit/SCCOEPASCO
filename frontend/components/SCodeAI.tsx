@@ -46,7 +46,6 @@ export default function SCodeAI({
     try {
       const data = await fetchFolder("");
       
-      // Technical folders to hide completely from the University dropdown
       const excludedFolders = [
         "frontend", 
         "backend", 
@@ -56,7 +55,6 @@ export default function SCodeAI({
         "docs"
       ];
 
-      // Only allow directories, and filter out those matching our excluded list
       const filtered = data.filter((item: any) => {
         const isDirectory = item.type === "dir";
         const folderNameLower = item.name.toLowerCase();
@@ -74,25 +72,27 @@ export default function SCodeAI({
     }
   }
 
-  async function loadFolder(path: string, setter: any) {
-    try {
       setLoading(true);
       const data = await fetchFolder(path);
       setter(
         data.filter((item: any) => item.type === "dir")
+
       );
     } catch (error) {
       console.error(error);
     } finally {
       setLoading(false);
     }
+
   }
+
 
   async function selectUniversity(path: string) {
     setLevels([]);
     setSemesters([]);
     setProgrammes([]);
     setPdfs([]);
+
 
     if (!path) return;
     await loadFolder(path, setLevels);
@@ -116,6 +116,7 @@ export default function SCodeAI({
   }
 
   async function selectProgramme(path: string) {
+    try {
       setLoading(true);
       const data = await fetchFolder(path);
       const files = data.filter(
@@ -124,11 +125,23 @@ export default function SCodeAI({
       setPdfs(files);
     } catch (error) {
       console.error(error);
+    } finally {
+      setLoading(false);
+    }
   }
+
+  function getPDFUrl(pdf: PDFItem) {
+    return (
+      "https://raw.githubusercontent.com/SCodeGit/SCCOEPASCO/main/" +
+      pdf.path
+        .split("/")
         .map(part => encodeURIComponent(part))
         .join("/")
     );
   }
+
+  function openPDF(pdf: PDFItem) {
+    const url = getPDFUrl(pdf);
     setDownloads(prev => [pdf.name, ...prev]);
     window.open(url, "_blank");
   }
@@ -138,9 +151,12 @@ export default function SCodeAI({
   );
 
   return (
+    <div className="scode-wrapper">
+      <header className="topbar">
+        <div className="brand">
           <span className="brand-logo">🎓</span>
           <div className="brand-text">
-            <h1 style={{ margin: 0, fontSize: "24px" }}>SCode Academic</h1>
+            <h1 className="main-title">SCode Academic</h1>
           </div>
         </div>
 
@@ -279,9 +295,9 @@ export default function SCodeAI({
             ) : (
               <div className="downloads-list">
                 {downloads.slice(0, 5).map((item, index) => (
-                  <div key={index} className="download-item" style={{display: 'flex', gap: '8px', padding: '6px 0'}}>
+                  <div key={index} className="download-item">
                     <span className="file-icon">✓</span>
-                    <p style={{margin: 0}}>{item}</p>
+                    <p className="download-text">{item}</p>
                   </div>
                 ))}
               </div>
@@ -334,19 +350,4 @@ export default function SCodeAI({
       </footer>
     </div>
   );
-}    <div className="scode-wrapper">
-      <header className="topbar">
-        <div className="brand">
-
-  function openPDF(pdf: PDFItem) {
-    const url = getPDFUrl(pdf);
-      "https://raw.githubusercontent.com/SCodeGit/SCCOEPASCO/main/" +
-      pdf.path
-        .split("/")
-
-  function getPDFUrl(pdf: PDFItem) {
-    return (
-    } finally {
-      setLoading(false);
-    }
-
+}
