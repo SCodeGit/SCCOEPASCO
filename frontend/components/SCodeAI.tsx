@@ -45,14 +45,30 @@ export default function SCodeAI({
   async function loadUniversities() {
     try {
       const data = await fetchFolder("");
-      // Filter out everything EXCEPT "University of Ghana" at the root level
-      setUniversities(
-        data.filter(
-          (item: any) => 
-            item.type === "dir" && 
-            item.name.toLowerCase().includes("university of ghana")
-        )
-      );
+      
+      // Technical folders to hide completely from the University dropdown
+      const excludedFolders = [
+        "frontend", 
+        "backend", 
+        "node_modules", 
+        ".git", 
+        ".github", 
+        "docs"
+      ];
+
+      // Only allow directories, and filter out those matching our excluded list
+      const filtered = data.filter((item: any) => {
+        const isDirectory = item.type === "dir";
+        const folderNameLower = item.name.toLowerCase();
+        
+        const isExcluded = excludedFolders.some(ex => 
+          folderNameLower === ex || folderNameLower.startsWith(ex + "/")
+        );
+
+        return isDirectory && !isExcluded;
+      });
+
+      setUniversities(filtered);
     } catch (error) {
       console.error("Repository error:", error);
     }
@@ -96,11 +112,10 @@ export default function SCodeAI({
     setPdfs([]);
 
     if (!path) return;
-    await loadFolder(path, setProgrammes);
+    await loadFolder(path, setSemesters);
   }
 
   async function selectProgramme(path: string) {
-    try {
       setLoading(true);
       const data = await fetchFolder(path);
       const files = data.filter(
@@ -109,45 +124,27 @@ export default function SCodeAI({
       setPdfs(files);
     } catch (error) {
       console.error(error);
-    } finally {
-      setLoading(false);
-    }
   }
-
-  function getPDFUrl(pdf: PDFItem) {
-    return (
-      "https://raw.githubusercontent.com/SCodeGit/SCCOEPASCO/main/" +
-      pdf.path
-        .split("/")
         .map(part => encodeURIComponent(part))
         .join("/")
     );
   }
-
-  function openPDF(pdf: PDFItem) {
-    const url = getPDFUrl(pdf);
     setDownloads(prev => [pdf.name, ...prev]);
     window.open(url, "_blank");
   }
 
-  // Live search filtering for PDFs loaded in the grid
   const filteredPdfs = pdfs.filter(pdf =>
     pdf.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
-    <div className="scode-wrapper">
-      <header className="topbar">
-        <div className="brand">
           <span className="brand-logo">🎓</span>
           <div className="brand-text">
-            <h1>SCode</h1>
-            <span>Academic AI Portal</span>
+            <h1 style={{ margin: 0, fontSize: "24px" }}>SCode Academic</h1>
           </div>
         </div>
 
         <div className="search-wrapper">
-          <span className="search-icon">🔍</span>
           <input
             className="search"
             placeholder="Search loaded papers..."
@@ -163,14 +160,13 @@ export default function SCodeAI({
             title="Light Mode"
           >
             ☀️
+          </button>
           <button 
             className={`theme-btn ${theme === 'dark' ? 'active' : ''}`}
             onClick={() => setTheme('dark')}
-
             title="Dark Mode"
           >
             🌙
-
           </button>
           <button 
             className={`theme-btn ${theme === 'system' ? 'active' : ''}`}
@@ -178,14 +174,13 @@ export default function SCodeAI({
             title="Use System Preference"
           >
             🖥️
-
           </button>
         </div>
       </header>
 
       <div className="dashboard-grid">
         <div className="left-column">
-          <section className="repository card-container">
+          <section className="repository">
             <div className="section-header">
               <h2>Select Study Materials</h2>
               <p>Filter through your institution's repository below</p>
@@ -193,7 +188,6 @@ export default function SCodeAI({
 
             <div className="filters">
               <div className="filter-group">
-                <label>Institution</label>
                 <select onChange={e => selectUniversity(e.target.value)}>
                   <option value="">Select University</option>
                   {universities.map(item => (
@@ -205,7 +199,6 @@ export default function SCodeAI({
               </div>
 
               <div className="filter-group">
-                <label>Year / Level</label>
                 <select disabled={!levels.length} onChange={e => selectLevel(e.target.value)}>
                   <option value="">Select Level</option>
                   {levels.map(item => (
@@ -217,7 +210,6 @@ export default function SCodeAI({
               </div>
 
               <div className="filter-group">
-                <label>Semester</label>
                 <select disabled={!semesters.length} onChange={e => selectSemester(e.target.value)}>
                   <option value="">Select Semester</option>
                   {semesters.map(item => (
@@ -229,7 +221,6 @@ export default function SCodeAI({
               </div>
 
               <div className="filter-group">
-                <label>Programme / Course</label>
                 <select disabled={!programmes.length} onChange={e => selectProgramme(e.target.value)}>
                   <option value="">Select Programme</option>
                   {programmes.map(item => (
@@ -260,7 +251,7 @@ export default function SCodeAI({
                       <button className="btn-secondary" onClick={() => openPDF(pdf)}>
                         View Document
                       </button>
-                      <button className="btn-primary" onClick={() => solveAI(getPDFUrl(pdf), pdf.name)}>
+                      <button className="ai" onClick={() => solveAI(getPDFUrl(pdf), pdf.name)}>
                         🤖 Solve AI
                       </button>
                     </div>
@@ -281,16 +272,16 @@ export default function SCodeAI({
             )}
           </section>
 
-          <section className="recent card-container">
+          <section className="recent">
             <h3>Recent Downloads</h3>
             {downloads.length === 0 ? (
               <p className="empty-downloads">Your recently viewed documents will list here.</p>
             ) : (
               <div className="downloads-list">
                 {downloads.slice(0, 5).map((item, index) => (
-                  <div key={index} className="download-item">
+                  <div key={index} className="download-item" style={{display: 'flex', gap: '8px', padding: '6px 0'}}>
                     <span className="file-icon">✓</span>
-                    <p>{item}</p>
+                    <p style={{margin: 0}}>{item}</p>
                   </div>
                 ))}
               </div>
@@ -299,7 +290,7 @@ export default function SCodeAI({
         </div>
 
         <div className="right-column">
-          <section className="ai-box card-container">
+          <section className="ai-box">
             <div className="section-header">
               <h2>🤖 AI Classroom Solver</h2>
               <p>Advanced PDF examination analysis & solution generator</p>
@@ -339,8 +330,23 @@ export default function SCodeAI({
       </div>
 
       <footer>
-        <p>© 2026 SCode Academic AI</p>
+        <p>© 2026 SCode Academic AI • Built for Modern Learning ecosystems</p>
       </footer>
     </div>
   );
-}
+}    <div className="scode-wrapper">
+      <header className="topbar">
+        <div className="brand">
+
+  function openPDF(pdf: PDFItem) {
+    const url = getPDFUrl(pdf);
+      "https://raw.githubusercontent.com/SCodeGit/SCCOEPASCO/main/" +
+      pdf.path
+        .split("/")
+
+  function getPDFUrl(pdf: PDFItem) {
+    return (
+    } finally {
+      setLoading(false);
+    }
+
