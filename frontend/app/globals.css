@@ -49,7 +49,8 @@ html[data-theme="dark"] {
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
   min-height: 100%;
@@ -58,10 +59,13 @@ html, body {
   font-family: Inter, Arial, sans-serif;
 }
 
-button, input, select {
+button,
+input,
+select {
   font-family: inherit;
 }
 
+button {
   cursor: pointer;
 }
 
@@ -71,25 +75,21 @@ button, input, select {
 
 .scode-wrapper {
   width: 100%;
-
   max-width: 1400px;
   margin: auto;
   padding: 24px;
-
 }
 
 /* TOP BAR */
 .topbar {
   display: flex;
   align-items: center;
-
   justify-content: space-between;
   gap: 20px;
   padding: 16px 22px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 16px;
-
   margin-bottom: 24px;
 }
 
@@ -117,7 +117,9 @@ button, input, select {
 }
 
 /* REPOSITORY */
-.repository, .ai-box, .recent {
+.repository,
+.ai-box,
+.recent {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 18px;
@@ -125,7 +127,8 @@ button, input, select {
   margin-bottom: 24px;
 }
 
-.repository h2, .ai-box h2 {
+.repository h2,
+.ai-box h2 {
   margin-top: 0;
 }
 
@@ -151,7 +154,7 @@ button, input, select {
 /* PDF CARDS */
 .pdf-grid {
   display: grid;
-  grid-template-columns: repeat( auto-fill, minmax(280px, 1fr) );
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 18px;
 }
 
@@ -216,7 +219,7 @@ footer {
   font-size: 14px;
 }
 
-@media(max-width: 900px){
+@media (max-width: 900px) {
   .topbar {
     flex-direction: column;
     align-items: stretch;
@@ -228,6 +231,7 @@ footer {
     grid-template-columns: 1fr;
   }
 }
+
 /* Inline Style Cleanups */
 .main-title {
   margin: 0;
