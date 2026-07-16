@@ -56,6 +56,7 @@ export default function UniversitySelector({
 
 
 
+  async function loadFolder(
     path:string,
     setter:any
   ){
@@ -68,24 +69,14 @@ export default function UniversitySelector({
       const data = await getGithubFolder(path);
 
 
-      setter(
         data.filter(
-
-          (item)=>item.type==="dir"
-        )
       );
 
 
     }catch(error){
-
-      console.error(error);
-
     }
     finally{
 
-      setLoading(false);
-
-    }
 
   }
 
@@ -386,4 +377,13 @@ export default function UniversitySelector({
 
   );
 
-}
+}      setLoading(false);
+
+    }
+
+      console.error(error);
+
+
+          (item)=>item.type==="dir"
+        )
+
