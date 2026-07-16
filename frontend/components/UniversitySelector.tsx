@@ -37,17 +37,18 @@ export default function UniversitySelector({
 
     try{
 
-      const data = await getGithubFolder("");
 
       setUniversities(
         data.filter(
           (item)=>item.type==="dir"
+
         )
       );
 
     }catch(error){
 
       console.error(error);
+
 
     }
 
@@ -62,6 +63,7 @@ export default function UniversitySelector({
   ){
 
 
+
     try{
 
       setLoading(true);
@@ -69,14 +71,24 @@ export default function UniversitySelector({
       const data = await getGithubFolder(path);
 
 
+      setter(
         data.filter(
+          (item)=>item.type==="dir"
+        )
       );
 
 
+
     }catch(error){
+
+      console.error(error);
+
     }
     finally{
 
+      setLoading(false);
+
+    }
 
   }
 
@@ -377,13 +389,4 @@ export default function UniversitySelector({
 
   );
 
-}      setLoading(false);
-
-    }
-
-      console.error(error);
-
-
-          (item)=>item.type==="dir"
-        )
-
+}
