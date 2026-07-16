@@ -58,7 +58,6 @@ savedTheme as "system"|"light"|"dark"
 
 
 
-
 useEffect(()=>{
 
 
@@ -70,12 +69,14 @@ document.documentElement;
 if(theme==="system"){
 
 
+
 root.removeAttribute(
 "data-theme"
 );
 
 
 }else{
+
 
 
 root.setAttribute(
