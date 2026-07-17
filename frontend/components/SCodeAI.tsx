@@ -67,16 +67,15 @@ export default function SCodeAI({
     try {
       setLoading(true);
       const data = await fetchFolder(path);
+      setter(
         data.filter((item: any) => item.type === "dir")
       );
     } catch (error) {
-
       console.error(error);
     } finally {
       setLoading(false);
     }
   }
-
 
   async function selectUniversity(path: string) {
     setLevels([]);
@@ -86,7 +85,6 @@ export default function SCodeAI({
 
     if (!path) return;
     await loadFolder(path, setLevels);
-
   }
 
   async function selectLevel(path: string) {
