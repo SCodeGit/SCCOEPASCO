@@ -40,8 +40,9 @@ export default function Home() {
       // Stripping trailing slashes or duplicate /api prefixes if they accidentally leak in
       const baseUrl = (process.env.NEXT_PUBLIC_AI_API || "https://scode-academic-ai-v2.onrender.com").replace(/\/+$/, "");
 
-      // Restored the '/api/solve' path prefix to match standard FastAPI router rules
-      const response = await fetch(`${baseUrl}/api/solve`, {
+      // Aligned the endpoint path prefix to `/api/ai/solve` to match your FastAPI app routing rules
+      const response = await fetch(`${baseUrl}/api/ai/solve`, {
+        method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
@@ -50,7 +51,6 @@ export default function Home() {
           filename: name
         })
       });
-
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
