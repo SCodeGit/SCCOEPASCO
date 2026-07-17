@@ -9,3 +9,5 @@ python-multipart
 pymupdf
 fireworks-ai
 pydantic
+pytesseract
+Pillow
