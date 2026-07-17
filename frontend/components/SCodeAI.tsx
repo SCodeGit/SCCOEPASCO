@@ -44,46 +44,37 @@ export default function SCodeAI({
 
   async function loadUniversities() {
     try {
+      setLoading(true);
       const data = await fetchFolder("");
-      
-      const excludedFolders = [
-        "frontend", 
-        "backend", 
-        "node_modules", 
-        ".git", 
-        ".github", 
-        "docs"
-      ];
 
+      // Strictly limit directory loading to University of Ghana (UG)
       const filtered = data.filter((item: any) => {
-        const isDirectory = item.type === "dir";
-        const folderNameLower = item.name.toLowerCase();
-        
-        const isExcluded = excludedFolders.some(ex => 
-          folderNameLower === ex || folderNameLower.startsWith(ex + "/")
+        return (
+          item.type === "dir" &&
+          item.name.toLowerCase() === "university of ghana(ug)"
         );
-
-        return isDirectory && !isExcluded;
       });
 
       setUniversities(filtered);
     } catch (error) {
       console.error("Repository error:", error);
+    } finally {
+      setLoading(false);
     }
   }
 
+  async function loadFolder(path: string, setter: (files: PDFItem[]) => void) {
+    try {
       setLoading(true);
       const data = await fetchFolder(path);
-      setter(
         data.filter((item: any) => item.type === "dir")
-
       );
     } catch (error) {
+
       console.error(error);
     } finally {
       setLoading(false);
     }
-
   }
 
 
@@ -93,9 +84,9 @@ export default function SCodeAI({
     setProgrammes([]);
     setPdfs([]);
 
-
     if (!path) return;
     await loadFolder(path, setLevels);
+
   }
 
   async function selectLevel(path: string) {
@@ -112,7 +103,7 @@ export default function SCodeAI({
     setPdfs([]);
 
     if (!path) return;
-    await loadFolder(path, setSemesters);
+    await loadFolder(path, setProgrammes);
   }
 
   async function selectProgramme(path: string) {
@@ -170,21 +161,21 @@ export default function SCodeAI({
         </div>
 
         <div className="theme-toggle-group">
-          <button 
+          <button
             className={`theme-btn ${theme === 'light' ? 'active' : ''}`}
             onClick={() => setTheme('light')}
             title="Light Mode"
           >
             ☀️
           </button>
-          <button 
+          <button
             className={`theme-btn ${theme === 'dark' ? 'active' : ''}`}
             onClick={() => setTheme('dark')}
             title="Dark Mode"
           >
             🌙
           </button>
-          <button 
+          <button
             className={`theme-btn ${theme === 'system' ? 'active' : ''}`}
             onClick={() => setTheme('system')}
             title="Use System Preference"
