@@ -1,39 +1,57 @@
-from fastapi import APIRouter
-from pydantic import BaseModel
+import fitz
+import requests
+import pytesseract
 
-from app.services.fireworks import ask_ai
-from app.services.pdf_extract import extract_pdf_text
-
-
-router = APIRouter()
+from PIL import Image
 
 
-class PDFRequest(BaseModel):
-    pdf_url: str
-    filename: str
+def extract_pdf_text(url):
+
+    response = requests.get(url)
+    response.raise_for_status()
+
+    pdf_bytes = response.content
+
+    doc = fitz.open(
+        stream=pdf_bytes,
+        filetype="pdf"
+    )
+
+    text = ""
+
+    for page in doc:
+
+        # Try normal text extraction first
+        page_text = page.get_text()
+
+        text += page_text + "\n"
 
 
-@router.post("/solve")
-def solve(data: PDFRequest):
+    # Smart decision:
+    # If extracted text is too small, assume scanned PDF
+    if len(text.strip()) < 100:
 
-    text = extract_pdf_text(data.pdf_url)
+        text = ""
 
-    prompt = f"""
-You are SCode Academic AI.
+        for page in doc:
 
-Analyze this academic document:
+            pix = page.get_pixmap(
+                dpi=300
+            )
 
-Filename:
-{data.filename}
+            image = Image.frombytes(
+                "RGB",
+                [pix.width, pix.height],
+                pix.samples
+            )
 
-Content:
-{text}
+            ocr_text = pytesseract.image_to_string(
+                image
+            )
 
-Provide clear solutions and explanations for the questions.
-"""
+            text += ocr_text + "\n"
 
-    answer = ask_ai(prompt)
 
-    return {
-        "answer": answer
-    }
+    doc.close()
+
+    return text.strip()
