@@ -1,13 +1,23 @@
 import fitz
+import requests
+import tempfile
 
 
-def extract_pdf_text(path):
+def extract_pdf_text(url):
 
-    doc = fitz.open(path)
+    response = requests.get(url)
 
-    text=""
+    response.raise_for_status()
 
-    for page in doc:
-        text += page.get_text()
+    with tempfile.NamedTemporaryFile(suffix=".pdf") as file:
+        file.write(response.content)
+        file.flush()
 
-    return text
+        doc = fitz.open(file.name)
+
+        text = ""
+
+        for page in doc:
+            text += page.get_text()
+
+        return text

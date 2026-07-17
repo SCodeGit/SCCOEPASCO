@@ -2,20 +2,38 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 
 from app.services.fireworks import ask_ai
+from app.services.pdf import extract_pdf_text
 
 
-router=APIRouter()
+router = APIRouter()
 
 
-class Question(BaseModel):
-    question:str
+class PDFRequest(BaseModel):
+    pdf_url: str
+    filename: str
 
 
 @router.post("/solve")
-def solve(data:Question):
+def solve(data: PDFRequest):
 
-    answer=ask_ai(data.question)
+    text = extract_pdf_text(data.pdf_url)
+
+    prompt = f"""
+You are SCode Academic AI.
+
+Analyze this examination document:
+
+Filename:
+{data.filename}
+
+Document text:
+{text}
+
+Provide clear academic solutions.
+"""
+
+    answer = ask_ai(prompt)
 
     return {
-        "answer":answer
+        "answer": answer
     }
