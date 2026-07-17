@@ -1,52 +1,34 @@
-import {getGithubFolder} from "./github";
-
+import { getGithubFolder } from "./github";
 
 export async function scanAcademicRepository(
-path=""
-):Promise<any[]>{
+  path = ""
+): Promise<any[]> {
 
+  const items = await getGithubFolder(path);
+  let results: any[] = [];
 
-const items=await getGithubFolder(path);
+  for (const item of items) {
+    const gitItem = item as any;
 
-let results:any[]=[];
+    if (gitItem.type === "dir") {
+      const children = await scanAcademicRepository(gitItem.path);
+      results = [
+        ...results,
+        ...children
+      ];
+    }
 
+    if (
+      gitItem.type === "file" &&
+      gitItem.name.toLowerCase().endsWith(".pdf")
+    ) {
+      results.push({
+        name: gitItem.name,
+        path: gitItem.path,
+        download: gitItem.download_url
+      });
+    }
+  }
 
-for(const item of items){
-
-
-if(item.type==="dir"){
-
-const children=await scanAcademicRepository(item.path);
-
-results=[
-...results,
-...children
-];
-
-}
-
-
-if(
-item.type==="file" &&
-item.name.toLowerCase().endsWith(".pdf")
-){
-
-results.push({
-
-name:item.name,
-
-path:item.path,
-
-download:item.download_url
-
-});
-
-}
-
-
-}
-
-
-return results;
-
+  return results;
 }
