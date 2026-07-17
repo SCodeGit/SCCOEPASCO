@@ -1,6 +1,5 @@
 import fitz
 import requests
-import tempfile
 
 
 def extract_pdf_text(url):
@@ -9,15 +8,18 @@ def extract_pdf_text(url):
 
     response.raise_for_status()
 
-    with tempfile.NamedTemporaryFile(suffix=".pdf") as file:
-        file.write(response.content)
-        file.flush()
+    pdf_data = response.content
 
-        doc = fitz.open(file.name)
+    doc = fitz.open(
+        stream=pdf_data,
+        filetype="pdf"
+    )
 
-        text = ""
+    text = ""
 
-        for page in doc:
-            text += page.get_text()
+    for page in doc:
+        text += page.get_text()
 
-        return text
+    doc.close()
+
+    return text
