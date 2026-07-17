@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 
 from app.services.fireworks import ask_ai
-from app.services.pdf import extract_pdf_text
+from app.services.pdf_extract import extract_pdf_text
 
 
 router = APIRouter()
@@ -21,15 +21,15 @@ def solve(data: PDFRequest):
     prompt = f"""
 You are SCode Academic AI.
 
-Analyze this examination document:
+Analyze this academic document:
 
 Filename:
 {data.filename}
 
-Document text:
+Content:
 {text}
 
-Provide clear academic solutions.
+Provide clear solutions and explanations for the questions.
 """
 
     answer = ask_ai(prompt)
