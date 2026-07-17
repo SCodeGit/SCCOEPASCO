@@ -334,9 +334,18 @@ export default function SCodeAI({
         </div>
       </div>
 
-      <footer>
-        <p>© 2026 SCode Academic AI • Built for Modern Learning ecosystems</p>
-      </footer>
+   <footer>
+  <p>
+    © {new Date().getFullYear()} SCode Academic AI • ATUBRA ABRAHAM •{" "}
+    <a
+      href="https://scodegit.github.io/scode.git.io/"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      SCode GitHub
+    </a>
+  </p>
+</footer>
     </div>
   );
 }

@@ -37,12 +37,11 @@ export default function Home() {
     setAnswer("");
 
     try {
-      // Stripping trailing slashes or /api prefixes if they accidentally leak in
+      // Stripping trailing slashes or duplicate /api prefixes if they accidentally leak in
       const baseUrl = (process.env.NEXT_PUBLIC_AI_API || "https://scode-academic-ai-v2.onrender.com").replace(/\/+$/, "");
-      
-      // Changing from /api/solve to /solve to align with standard FastAPI routing rules
-      const response = await fetch(`${baseUrl}/solve`, {
-        method: "POST",
+
+      // Restored the '/api/solve' path prefix to match standard FastAPI router rules
+      const response = await fetch(`${baseUrl}/api/solve`, {
         headers: {
           "Content-Type": "application/json"
         },
@@ -52,9 +51,11 @@ export default function Home() {
         })
       });
 
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         console.error("Backend Error Response:", errorData);
+
         throw new Error("AI server request failed");
       }
 
