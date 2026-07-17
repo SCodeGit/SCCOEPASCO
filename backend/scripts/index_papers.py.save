@@ -1,0 +1,105 @@
+import os
+from pathlib import Path
+from dotenv import load_dotenv
+
+from app.services.pdf_extract import extract_pdf_text
+from app.services.mongo import save_paper
+from app.services.fireworks import ask_ai
+
+
+load_dotenv()
+
+
+PDF_FOLDER = Path("../../") 
+
+
+def process_pdf(pdf_path):
+
+    print("\nProcessing:", pdf_path)
+
+    try:
+
+        text = extract_pdf_text(
+            str(pdf_path)
+        )
+
+        if len(text.strip()) < 50:
+            print("No readable text:", pdf_path)
+            return
+
+
+        prompt = f"""
+You are SCode Academic AI.
+
+Analyze this academic PDF.
+
+Filename:
+{pdf_path.name}
+
+
+Extract:
+
+- Course code
+- Subject
+
+- Year
+- Level
+- Semester
+- Main topics
+- Examination questions
+
+
+Document:
+
+"""
+
+
+
+        metadata = ask_ai(prompt)
+
+
+        save_paper(
+            {
+
+                "filename": pdf_path.name,
+                "path": str(pdf_path),
+                "text": text,
+                "metadata": metadata
+            }
+        )
+
+
+        print("Saved:", pdf_path.name)
+
+
+
+    except Exception as e:
+
+        print(
+            "FAILED:",
+            pdf_path,
+            e
+        )
+
+
+
+def main():
+
+    pdfs = list(
+        PDF_FOLDER.rglob("*.pdf")
+    )
+
+    print(
+        "PDF FOUND:",
+        len(pdfs)
+    )
+
+
+    for pdf in pdfs:
+
+        process_pdf(pdf)
+
+
+
+if __name__ == "__main__":
+    main()

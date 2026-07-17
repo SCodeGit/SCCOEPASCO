@@ -1,57 +1,78 @@
-import fitz
-import requests
-import pytesseract
+from fastapi import APIRouter
+from pydantic import BaseModel
 
-from PIL import Image
+from app.services.mongo import papers_collection, save_paper
+from app.services.pdf_extract import extract_pdf_text
+from app.services.ai_service import ask_ai
 
 
-def extract_pdf_text(url):
+router = APIRouter()
 
-    response = requests.get(url)
-    response.raise_for_status()
 
-    pdf_bytes = response.content
+class SolveRequest(BaseModel):
+    pdf_url: str
+    filename: str
 
-    doc = fitz.open(
-        stream=pdf_bytes,
-        filetype="pdf"
+
+@router.post("/solve")
+def solve(data: SolveRequest):
+
+    # -----------------------------
+    # Check Mongo first
+    # -----------------------------
+
+    paper = papers_collection.find_one(
+        {
+            "filename": data.filename
+        }
     )
 
-    text = ""
+    if paper:
 
-    for page in doc:
+        print("Loaded from Mongo")
 
-        # Try normal text extraction first
-        page_text = page.get_text()
+        text = paper["text"]
 
-        text += page_text + "\n"
+    else:
 
+        print("Extracting PDF...")
 
-    # Smart decision:
-    # If extracted text is too small, assume scanned PDF
-    if len(text.strip()) < 100:
+        text = extract_pdf_text(data.pdf_url)
 
-        text = ""
+        metadata = {
+            "processed": True,
+            "text_length": len(text),
+            "ocr_used": True
+        }
 
-        for page in doc:
+        save_paper(
+            data.filename,
+            data.pdf_url,
+            text,
+            metadata
+        )
 
-            pix = page.get_pixmap(
-                dpi=300
-            )
+    # -----------------------------
+    # Ask AI
+    # -----------------------------
 
-            image = Image.frombytes(
-                "RGB",
-                [pix.width, pix.height],
-                pix.samples
-            )
+    prompt = f"""
+You are SCode Academic AI.
 
-            ocr_text = pytesseract.image_to_string(
-                image
-            )
+Below is a past examination paper.
 
-            text += ocr_text + "\n"
+Answer every question clearly.
 
+If it is multiple choice,
+provide the correct option and explain why.
 
-    doc.close()
+Paper:
 
-    return text.strip()
+{text}
+"""
+
+    answer = ask_ai(prompt)
+
+    return {
+        "solution": answer
+    }

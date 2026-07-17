@@ -1,25 +1,85 @@
 import fitz
-import requests
+import pytesseract
+
+from PIL import Image
 
 
-def extract_pdf_text(url):
+def extract_pdf_text(file_path):
 
-    response = requests.get(url)
-
-    response.raise_for_status()
-
-    pdf_data = response.content
-
-    doc = fitz.open(
-        stream=pdf_data,
-        filetype="pdf"
-    )
+    doc = fitz.open(file_path)
 
     text = ""
 
+    # ---------------------------------
+    # Try extracting embedded PDF text
+    # ---------------------------------
+
     for page in doc:
-        text += page.get_text()
+
+        page_text = page.get_text()
+
+        text += page_text + "\n"
+
+
+    # ---------------------------------
+    # OCR fallback for scanned PDFs
+    # ---------------------------------
+
+    if len(text.strip()) < 100:
+
+        print("OCR MODE:", file_path)
+
+        text = ""
+
+        for page_number, page in enumerate(doc):
+
+            print(
+                "OCR PAGE:",
+                page_number + 1
+            )
+
+            pix = page.get_pixmap(
+                dpi=300
+            )
+
+
+            image = Image.frombytes(
+                "RGB",
+                [
+                    pix.width,
+                    pix.height
+                ],
+                pix.samples
+            )
+
+
+            ocr_text = pytesseract.image_to_string(
+                image,
+                config="--psm 6"
+            )
+
+
+            text += ocr_text + "\n"
+
 
     doc.close()
 
-    return text
+
+    # ---------------------------------
+    # Clean OCR noise
+    # ---------------------------------
+
+    text = text.replace(
+        "\x00",
+        ""
+    )
+
+
+    text = "\n".join(
+        line.strip()
+        for line in text.splitlines()
+        if line.strip()
+    )
+
+
+    return text.strip()
