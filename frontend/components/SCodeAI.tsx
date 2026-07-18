@@ -330,271 +330,477 @@ setChatLoading(false);
             </div>
 
             {loading && (
-              <div className="loading-spinner-container">
-                <div className="spinner"></div>
-                <p>Retrieving documents...</p>
-              </div>
-            )}
+  <div className="loading-spinner-container">
+    <div className="spinner"></div>
+    <p>Retrieving documents...</p>
+  </div>
+)}
 
-            {!loading && filteredPdfs.length > 0 && (
-              <div className="pdf-grid">
-                {filteredPdfs.map(pdf => (
-                  <div className="pdf-card" key={pdf.path}>
-                    <div className="pdf-icon">📄</div>
-                    <div className="pdf-details">
-                      <h3>{pdf.name.replace(".pdf", "")}</h3>
-                    </div>
-                    <div className="actions">
-                      <button className="btn-secondary" onClick={() => openPDF(pdf)}>
-                        View Document
-                      </button>
-                      <button
-className="ai"
-onClick={() => {
 
-setSelectedPDF(pdf);
+{!loading && filteredPdfs.length > 0 && (
+  <div className="pdf-grid">
 
-setChat([]);
+    {filteredPdfs.map((pdf) => (
 
-solveAI(
-getPDFUrl(pdf),
-pdf.name
-);
+      <div className="pdf-card" key={pdf.path}>
 
-}}
->
-🤖 Solve AI
-</button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {!loading && pdfs.length > 0 && filteredPdfs.length === 0 && (
-              <p className="empty-state">No papers found matching "{searchQuery}"</p>
-            )}
-
-            {!loading && pdfs.length === 0 && (
-              <div className="empty-state">
-                <span className="empty-icon">📚</span>
-                <p>Select your University filters above to display documents.</p>
-              </div>
-            )}
-          </section>
-
-          <section className="recent">
-            <h3>Recent Downloads</h3>
-            {downloads.length === 0 ? (
-              <p className="empty-downloads">Your recently viewed documents will list here.</p>
-            ) : (
-              <div className="downloads-list">
-                {downloads.slice(0, 5).map((item, index) => (
-                  <div key={index} className="download-item">
-                    <span className="file-icon">✓</span>
-                    <p className="download-text">{item}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
+        <div className="pdf-icon">
+          📄
         </div>
 
-        <div className="right-column">
-          <section className="ai-box">
-            <div className="section-header">
-              <h2>🤖 AI Classroom Solver</h2>
-              <p>Advanced PDF examination analysis & solution generator</p>
-            </div>
 
-            <div className="ai-content">
+        <div className="pdf-details">
 
-  {loadingAI && (
-    <div className="ai-loading-state">
-      <div className="ai-pulse-scanner"></div>
+          <h3>
+            {pdf.name.replace(".pdf", "")}
+          </h3>
 
-      <p>
-        Processing text structures & crunching formulas...
-      </p>
-
-      <span>
-        This may take a moment. Please keep this tab active.
-      </span>
-
-    </div>
-  )}
+        </div>
 
 
 
-  {!loadingAI && answer && (
-
-    <div className="answer-wrapper">
-
-      <div className="answer-header">
-
-        <span>
-          Generated Solution
-        </span>
+        <div className="actions">
 
 
-        <button
-          className="btn-copy"
-          onClick={() =>
-            navigator.clipboard.writeText(answer)
-          }
-        >
-          📋 Copy Text
-        </button>
-
-
-      </div>
-
-
-      <div className="answer">
-        {answer}
-      </div>
-
-
-    </div>
-
-  )}
-
-
-
-
-  {selectedPDF && (
-
-    <div className="chat-box">
-
-      <h3>
-        💬 Ask about this paper
-      </h3>
-
-
-      <div className="messages">
-
-
-        {chat.map((msg,index)=>(
-
-          <div
-            key={index}
-            className={
-              msg.role === "user"
-              ? "user-message"
-              : "ai-message"
-            }
+          <button
+            className="btn-secondary"
+            onClick={() => openPDF(pdf)}
           >
-
-            {msg.content}
-
-          </div>
-
-
-        ))}
+            View Document
+          </button>
 
 
 
-        {chatLoading && (
+          <button
+            className="ai"
+            onClick={() => {
 
-          <div className="ai-message">
-            Thinking...
-          </div>
+              setSelectedPDF(pdf);
 
-        )}
+              setChat([]);
 
+              solveAI(
+                getPDFUrl(pdf),
+                pdf.name
+              );
 
-      </div>
-
-
-
-
-      <div className="chat-input">
-
-
-        <input
-
-          value={question}
-
-          onChange={
-            (e)=>setQuestion(e.target.value)
-          }
+            }}
+          >
+            🤖 Solve AI
+          </button>
 
 
-          onKeyDown={
-            (e)=>{
-
-              if(e.key==="Enter"){
-                sendChat();
-              }
-
-            }
-          }
-
-
-          placeholder="Ask anything about this paper..."
-
-        />
-
-
-
-        <button
-          onClick={sendChat}
-        >
-          Send
-        </button>
+        </div>
 
 
       </div>
 
 
-    </div>
+    ))}
 
-  )}
-
-
-
-
-  {!loadingAI && !answer && !selectedPDF && (
-
-    <div className="ai-placeholder">
-
-      <div className="placeholder-graphic">
-        ✨
-      </div>
+  </div>
+)}
 
 
-      <h3>
-        Ready for analysis
-      </h3>
+
+{!loading && pdfs.length > 0 && filteredPdfs.length === 0 && (
+
+  <p className="empty-state">
+    No papers found matching "{searchQuery}"
+  </p>
+
+)}
 
 
-      <p>
-        Select any PDF on the left and click 
-        <strong> Solve AI </strong>.
-        The AI will analyse the examination paper
-        and allow you to ask follow-up questions.
-      </p>
+
+{!loading && pdfs.length === 0 && (
+
+  <div className="empty-state">
+
+    <span className="empty-icon">
+      📚
+    </span>
+
+    <p>
+      Select your University filters above to display documents.
+    </p>
+
+  </div>
+
+)}
 
 
-    </div>
+</section>
 
-  )}
+
+
+<section className="recent">
+
+<h3>
+Recent Downloads
+</h3>
+
+
+{downloads.length === 0 ? (
+
+<p className="empty-downloads">
+Your recently viewed documents will list here.
+</p>
+
+
+) : (
+
+
+<div className="downloads-list">
+
+{downloads
+.slice(0,5)
+.map((item,index)=>(
+
+<div
+key={index}
+className="download-item"
+>
+
+<span className="file-icon">
+✓
+</span>
+
+
+<p className="download-text">
+{item}
+</p>
 
 
 </div>
 
-   <footer>
-  <p>
-    © {new Date().getFullYear()} SCode Academic AI • ATUBRA ABRAHAM •{" "}
-    <a
-      href="https://scodegit.github.io/scode.git.io/"
-      target="_blank"
-      rel="noopener noreferrer"
-    >
-      SCode GitHub
-    </a>
-  </p>
+
+))}
+
+
+</div>
+
+
+)}
+
+
+</section>
+
+
+</div>
+
+
+
+
+
+<div className="right-column">
+
+
+<section className="ai-box">
+
+
+<div className="section-header">
+
+<h2>
+🤖 AI Classroom Solver
+</h2>
+
+
+<p>
+Advanced PDF examination analysis & solution generator
+</p>
+
+
+</div>
+
+
+
+
+
+<div className="ai-content">
+
+
+
+
+
+{loadingAI && (
+
+<div className="ai-loading-state">
+
+
+<div className="ai-pulse-scanner"></div>
+
+
+<p>
+Processing examination paper...
+</p>
+
+
+<span>
+Extracting text and generating answers.
+</span>
+
+
+</div>
+
+)}
+
+
+
+
+
+
+{!loadingAI && answer && (
+
+<div className="answer-wrapper">
+
+
+<div className="answer-header">
+
+
+<span>
+Generated Solution
+</span>
+
+
+
+<button
+
+className="btn-copy"
+
+onClick={() =>
+navigator.clipboard.writeText(answer)
+}
+
+>
+
+📋 Copy Text
+
+</button>
+
+
+</div>
+
+
+
+
+<div className="answer">
+
+{answer}
+
+</div>
+
+
+
+</div>
+
+)}
+
+
+
+
+
+
+
+{selectedPDF && (
+
+<div className="chat-box">
+
+
+<h3>
+💬 Ask about this paper
+</h3>
+
+
+
+<div className="messages">
+
+
+{chat.map((msg,index)=>(
+
+
+<div
+
+key={index}
+
+className={
+msg.role === "user"
+? "user-message"
+: "ai-message"
+}
+
+>
+
+{msg.content}
+
+</div>
+
+
+))}
+
+
+
+
+
+{chatLoading && (
+
+<div className="ai-message">
+
+Thinking...
+
+</div>
+
+)}
+
+
+
+</div>
+
+
+
+
+
+
+<div className="chat-input">
+
+
+<input
+
+value={question}
+
+onChange={(e)=>
+setQuestion(e.target.value)
+}
+
+
+onKeyDown={(e)=>{
+
+if(e.key==="Enter")
+sendChat();
+
+}}
+
+
+placeholder="Ask anything about this paper..."
+
+/>
+
+
+
+
+<button
+onClick={sendChat}
+>
+
+Send
+
+</button>
+
+
+</div>
+
+
+
+
+</div>
+
+
+)}
+
+
+
+
+
+
+
+{!loadingAI && !answer && !selectedPDF && (
+
+
+<div className="ai-placeholder">
+
+
+<div className="placeholder-graphic">
+
+✨
+
+</div>
+
+
+
+<h3>
+Ready for analysis
+</h3>
+
+
+
+<p>
+
+Select any PDF on the left and click
+
+<strong>
+ Solve AI
+</strong>.
+
+The AI will analyse the examination paper
+and allow you to ask follow-up questions.
+
+</p>
+
+
+
+</div>
+
+
+)}
+
+
+
+</div>
+
+
+</section>
+
+
+</div>
+
+
+</div>
+
+
+
+
+<footer>
+
+
+<p>
+
+© {new Date().getFullYear()} SCode Academic AI • ATUBRA ABRAHAM •{" "}
+
+
+<a
+
+href="https://scodegit.github.io/scode.git.io/"
+
+target="_blank"
+
+rel="noopener noreferrer"
+
+>
+
+SCode GitHub
+
+</a>
+
+
+</p>
+
+
 </footer>
-    </div>
-  );
+
+
+
+</div>
+
+);
+
 }
