@@ -1,17 +1,46 @@
 import fitz
 import pytesseract
+import requests
 
 from PIL import Image
+from io import BytesIO
 
 
-def extract_pdf_text(file_path):
+def extract_pdf_text(pdf_url):
 
-    doc = fitz.open(file_path)
+    print("DOWNLOADING PDF:")
+    print(pdf_url)
+
+
+    # ---------------------------------
+    # Download PDF from GitHub
+    # ---------------------------------
+
+    response = requests.get(
+        pdf_url,
+        timeout=60
+    )
+
+
+    response.raise_for_status()
+
+
+    pdf_bytes = response.content
+
+
+    # Open PDF from memory
+
+    doc = fitz.open(
+        stream=pdf_bytes,
+        filetype="pdf"
+    )
+
 
     text = ""
 
+
     # ---------------------------------
-    # Try extracting embedded PDF text
+    # Try normal PDF text extraction
     # ---------------------------------
 
     for page in doc:
@@ -21,15 +50,18 @@ def extract_pdf_text(file_path):
         text += page_text + "\n"
 
 
+
     # ---------------------------------
-    # OCR fallback for scanned PDFs
+    # OCR fallback
     # ---------------------------------
 
     if len(text.strip()) < 100:
 
-        print("OCR MODE:", file_path)
+        print("OCR MODE")
+
 
         text = ""
+
 
         for page_number, page in enumerate(doc):
 
@@ -37,6 +69,7 @@ def extract_pdf_text(file_path):
                 "OCR PAGE:",
                 page_number + 1
             )
+
 
             pix = page.get_pixmap(
                 dpi=300
@@ -62,11 +95,12 @@ def extract_pdf_text(file_path):
             text += ocr_text + "\n"
 
 
+
     doc.close()
 
 
     # ---------------------------------
-    # Clean OCR noise
+    # Clean text
     # ---------------------------------
 
     text = text.replace(
@@ -79,6 +113,12 @@ def extract_pdf_text(file_path):
         line.strip()
         for line in text.splitlines()
         if line.strip()
+    )
+
+
+    print(
+        "EXTRACTED CHARACTERS:",
+        len(text)
     )
 
 
