@@ -9,22 +9,34 @@ from app.services.fireworks import ask_ai
 router = APIRouter()
 
 
-class SolveRequest(BaseModel):
+# ==============================
+# REQUEST MODELS
+# ==============================
 
+class SolveRequest(BaseModel):
     pdf_url: str
     filename: str
 
 
 
+class ChatRequest(BaseModel):
+    filename: str
+    question: str
+
+
+
+# ==============================
+# SOLVE FULL PAPER
+# ==============================
+
 @router.post("/solve")
 def solve(data: SolveRequest):
-
 
     print("REQUESTED:", data.filename)
 
 
     # -----------------------------
-    # Search Mongo
+    # Check Mongo first
     # -----------------------------
 
     paper = papers_collection.find_one(
@@ -47,6 +59,7 @@ def solve(data: SolveRequest):
     else:
 
         print("NOT FOUND - OCR START")
+
 
         text = extract_pdf_text(
             data.pdf_url
@@ -90,9 +103,8 @@ def solve(data: SolveRequest):
 
 
     # -----------------------------
-    # Send to DeepSeek
+    # Ask AI
     # -----------------------------
-
 
     prompt = f"""
 
@@ -104,10 +116,10 @@ Instructions:
 
 - Answer all questions.
 - Maintain numbering.
-- For MCQ give option + explanation.
+- For MCQ provide option and explanation.
 - For theory questions provide academic answers.
 
-EXAM PAPER:
+EXAMINATION PAPER:
 
 {text}
 
@@ -122,5 +134,98 @@ EXAM PAPER:
     return {
 
         "solution": answer
+
+    }
+
+
+
+
+
+# ==============================
+# CHAT WITH PAPER
+# ==============================
+
+@router.post("/chat")
+def chat(data: ChatRequest):
+
+
+    print(
+        "CHAT REQUEST:",
+        data.filename
+    )
+
+
+    # Find paper from Mongo
+
+    paper = papers_collection.find_one(
+        {
+            "filename": data.filename
+        }
+    )
+
+
+    if not paper:
+
+        return {
+
+            "answer":
+            "This paper is not indexed yet."
+
+        }
+
+
+
+    text = paper.get(
+        "text",
+        ""
+    )
+
+
+
+    if not text.strip():
+
+        return {
+
+            "answer":
+            "No readable content exists for this paper."
+
+        }
+
+
+
+    # Send paper + question to AI
+
+    prompt = f"""
+
+You are SCode Academic AI.
+
+A student is asking about an examination paper.
+
+Use the paper content below to answer.
+
+Paper:
+
+{text}
+
+
+Student Question:
+
+{data.question}
+
+
+Answer clearly and academically.
+
+"""
+
+
+    answer = ask_ai(
+        prompt
+    )
+
+
+
+    return {
+
+        "answer": answer
 
     }
