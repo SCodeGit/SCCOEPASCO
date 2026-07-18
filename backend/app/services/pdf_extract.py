@@ -6,29 +6,26 @@ from PIL import Image
 from io import BytesIO
 
 
+
 def extract_pdf_text(pdf_url):
 
     print("DOWNLOADING PDF:")
     print(pdf_url)
 
 
-    # ---------------------------------
-    # Download PDF from GitHub
-    # ---------------------------------
+    response = requests.get(pdf_url)
 
-    response = requests.get(
-        pdf_url,
-        timeout=60
+
+    if response.status_code != 200:
+        raise Exception(
+            "PDF download failed"
+        )
+
+
+    pdf_bytes = BytesIO(
+        response.content
     )
 
-
-    response.raise_for_status()
-
-
-    pdf_bytes = response.content
-
-
-    # Open PDF from memory
 
     doc = fitz.open(
         stream=pdf_bytes,
@@ -39,31 +36,25 @@ def extract_pdf_text(pdf_url):
     text = ""
 
 
-    # ---------------------------------
-    # Try normal PDF text extraction
-    # ---------------------------------
+    # normal PDF extraction
 
     for page in doc:
 
-        page_text = page.get_text()
-
-        text += page_text + "\n"
+        text += page.get_text() + "\n"
 
 
 
-    # ---------------------------------
     # OCR fallback
-    # ---------------------------------
 
     if len(text.strip()) < 100:
 
         print("OCR MODE")
 
 
-        text = ""
+        text=""
 
 
-        for page_number, page in enumerate(doc):
+        for page_number,page in enumerate(doc):
 
             print(
                 "OCR PAGE:",
@@ -99,26 +90,16 @@ def extract_pdf_text(pdf_url):
     doc.close()
 
 
-    # ---------------------------------
-    # Clean text
-    # ---------------------------------
-
     text = text.replace(
         "\x00",
         ""
     )
 
 
-    text = "\n".join(
+    text="\n".join(
         line.strip()
         for line in text.splitlines()
         if line.strip()
-    )
-
-
-    print(
-        "EXTRACTED CHARACTERS:",
-        len(text)
     )
 
 
