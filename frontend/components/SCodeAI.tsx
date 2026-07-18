@@ -9,6 +9,12 @@ type PDFItem = {
   type?: string;
 };
 
+
+type ChatMessage = {
+  role: "user" | "ai";
+  content: string;
+};
+
 interface Props {
   pdfs: PDFItem[];
   setPdfs: (files: PDFItem[]) => void;
@@ -37,7 +43,13 @@ export default function SCodeAI({
   const [loading, setLoading] = useState(false);
   const [downloads, setDownloads] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+const [selectedPDF, setSelectedPDF] = useState<PDFItem | null>(null);
 
+const [chat, setChat] = useState<ChatMessage[]>([]);
+
+const [question, setQuestion] = useState("");
+
+const [chatLoading, setChatLoading] = useState(false);
   useEffect(() => {
     loadUniversities();
   }, []);
@@ -138,7 +150,87 @@ export default function SCodeAI({
   const filteredPdfs = pdfs.filter(pdf =>
     pdf.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+async function sendChat(){
 
+if(!question.trim() || !selectedPDF)
+return;
+
+
+const userMessage = question;
+
+
+setChat(prev=>[
+...prev,
+{
+role:"user",
+content:userMessage
+}
+]);
+
+
+setQuestion("");
+
+setChatLoading(true);
+
+
+try{
+
+
+const response = await fetch(
+process.env.NEXT_PUBLIC_AI_API + "/chat",
+{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+
+filename:selectedPDF.name,
+
+question:userMessage
+
+})
+
+});
+
+
+const data = await response.json();
+
+
+
+setChat(prev=>[
+...prev,
+{
+role:"ai",
+content:data.answer
+}
+]);
+
+
+}
+catch(error){
+
+setChat(prev=>[
+...prev,
+{
+role:"ai",
+content:"AI connection failed."
+}
+]);
+
+}
+
+finally{
+
+setChatLoading(false);
+
+}
+
+
+}
   return (
     <div className="scode-wrapper">
       <header className="topbar">
@@ -256,9 +348,23 @@ export default function SCodeAI({
                       <button className="btn-secondary" onClick={() => openPDF(pdf)}>
                         View Document
                       </button>
-                      <button className="ai" onClick={() => solveAI(getPDFUrl(pdf), pdf.name)}>
-                        🤖 Solve AI
-                      </button>
+                      <button
+className="ai"
+onClick={() => {
+
+setSelectedPDF(pdf);
+
+setChat([]);
+
+solveAI(
+getPDFUrl(pdf),
+pdf.name
+);
+
+}}
+>
+🤖 Solve AI
+</button>
                     </div>
                   </div>
                 ))}
@@ -302,37 +408,180 @@ export default function SCodeAI({
             </div>
 
             <div className="ai-content">
-              {loadingAI && (
-                <div className="ai-loading-state">
-                  <div className="ai-pulse-scanner"></div>
-                  <p>Processing text structures & crunching formulas...</p>
-                  <span>This may take a moment. Please keep this tab active.</span>
-                </div>
-              )}
 
-              {!loadingAI && answer && (
-                <div className="answer-wrapper">
-                  <div className="answer-header">
-                    <span>Generated Solution</span>
-                    <button className="btn-copy" onClick={() => navigator.clipboard.writeText(answer)}>
-                      📋 Copy Text
-                    </button>
-                  </div>
-                  <div className="answer">{answer}</div>
-                </div>
-              )}
+  {loadingAI && (
+    <div className="ai-loading-state">
+      <div className="ai-pulse-scanner"></div>
 
-              {!loadingAI && !answer && (
-                <div className="ai-placeholder">
-                  <div className="placeholder-graphic">✨</div>
-                  <h3>Ready for analysis</h3>
-                  <p>Select any PDF on the left and click <strong>Solve AI</strong>. Our solver will scan questions, equations, and structures to generate direct solutions.</p>
-                </div>
-              )}
-            </div>
-          </section>
-        </div>
+      <p>
+        Processing text structures & crunching formulas...
+      </p>
+
+      <span>
+        This may take a moment. Please keep this tab active.
+      </span>
+
+    </div>
+  )}
+
+
+
+  {!loadingAI && answer && (
+
+    <div className="answer-wrapper">
+
+      <div className="answer-header">
+
+        <span>
+          Generated Solution
+        </span>
+
+
+        <button
+          className="btn-copy"
+          onClick={() =>
+            navigator.clipboard.writeText(answer)
+          }
+        >
+          📋 Copy Text
+        </button>
+
+
       </div>
+
+
+      <div className="answer">
+        {answer}
+      </div>
+
+
+    </div>
+
+  )}
+
+
+
+
+  {selectedPDF && (
+
+    <div className="chat-box">
+
+      <h3>
+        💬 Ask about this paper
+      </h3>
+
+
+      <div className="messages">
+
+
+        {chat.map((msg,index)=>(
+
+          <div
+            key={index}
+            className={
+              msg.role === "user"
+              ? "user-message"
+              : "ai-message"
+            }
+          >
+
+            {msg.content}
+
+          </div>
+
+
+        ))}
+
+
+
+        {chatLoading && (
+
+          <div className="ai-message">
+            Thinking...
+          </div>
+
+        )}
+
+
+      </div>
+
+
+
+
+      <div className="chat-input">
+
+
+        <input
+
+          value={question}
+
+          onChange={
+            (e)=>setQuestion(e.target.value)
+          }
+
+
+          onKeyDown={
+            (e)=>{
+
+              if(e.key==="Enter"){
+                sendChat();
+              }
+
+            }
+          }
+
+
+          placeholder="Ask anything about this paper..."
+
+        />
+
+
+
+        <button
+          onClick={sendChat}
+        >
+          Send
+        </button>
+
+
+      </div>
+
+
+    </div>
+
+  )}
+
+
+
+
+  {!loadingAI && !answer && !selectedPDF && (
+
+    <div className="ai-placeholder">
+
+      <div className="placeholder-graphic">
+        ✨
+      </div>
+
+
+      <h3>
+        Ready for analysis
+      </h3>
+
+
+      <p>
+        Select any PDF on the left and click 
+        <strong> Solve AI </strong>.
+        The AI will analyse the examination paper
+        and allow you to ask follow-up questions.
+      </p>
+
+
+    </div>
+
+  )}
+
+
+</div>
 
    <footer>
   <p>
