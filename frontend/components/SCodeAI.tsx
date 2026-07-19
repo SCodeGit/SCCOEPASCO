@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useRef } from "react";
 import { fetchFolder } from "@/lib/github";
-import { AIStage, QuestionData } from "../app/page";
 
 type PDFItem = {
   name: string;
@@ -20,99 +19,9 @@ interface Props {
   setPdfs: (files: PDFItem[]) => void;
   solveAI: (url: string, name: string) => void;
   loadingAI: boolean;
-  aiStage: AIStage;
-  questions: QuestionData[];
-  paperId: string;
+  answer: string;
   theme: "system" | "light" | "dark";
   setTheme: (theme: "system" | "light" | "dark") => void;
-}
-
-interface StructuredQuestion {
-  id: string;
-  displayIndex: number;
-  questionText: string;
-  correctAnswer: string;
-  explanation: string;
-  type: string;
-}
-
-/**
- * Super-Parser: Intercepts the backend's messy text block, identifies if it contains
- * multiple numbered questions, and splits them into clean, separate virtual UI entities.
- */
-function unpackBackendQuestions(rawQuestions: QuestionData[]): StructuredQuestion[] {
-  if (!rawQuestions || rawQuestions.length === 0) return [];
-
-  const parsedList: StructuredQuestion[] = [];
-  let virtualIndex = 1;
-
-  rawQuestions.forEach((backendQ) => {
-    const rawText = backendQ.solution || backendQ.explanation || "";
-    
-    // Look for lines starting with "1. ", "2. ", "Question 1:", etc.
-    const questionBlockRegex = /(?:^|\n)(?:\*\*|\b)?(?:Question\s+)?(\d+)[.)]\s*(.*?)(?=(?:\n(?:\*\*|\b)?(?:Question\s+)?\d+[.)])|$)/gs;
-    
-    let match;
-    let foundSubQuestions = false;
-
-    // Reset regex index for safety
-    questionBlockRegex.lastIndex = 0;
-
-    while ((match = questionBlockRegex.exec(rawText)) !== null) {
-      foundSubQuestions = true;
-      const qNum = match[1];
-      const contentBlock = match[2].trim();
-
-      // Within this individual block, extract the answer and explanation markers
-      let correctAnswer = "";
-      let explanation = contentBlock;
-
-      // Extract specific bold answer selections e.g. "**B. first aid**" or "B. first aid"
-      const answerRegex = /(?:\*\*Answer:\*\*|\*\*Correct Answer:\*\*|Correct Answer:)\s*(.*?)(?:\n|$)/i;
-      const inlineAnswerRegex = /[*+-]?\s*\*?([A-D]\.\s*[^*_\n]+)\*?/i;
-      
-      let answerMatch = contentBlock.match(answerRegex) || contentBlock.match(inlineAnswerRegex);
-      
-      if (answerMatch) {
-        correctAnswer = answerMatch[1].replace(/\*+/g, "").trim();
-      }
-
-      // Isolate explanation text if the backend explicitly marked it
-      if (contentBlock.includes("Explanation:")) {
-        const parts = contentBlock.split("Explanation:");
-        explanation = parts[1].replace(/\*+/g, "").trim();
-      } else if (answerMatch) {
-        // Clean up text if explanation wasn't labeled explicitly
-        explanation = contentBlock.replace(answerMatch[0], "").trim();
-      }
-
-      // Clean markdown bold tags off the text variables
-      explanation = explanation.replace(/\*+/g, "").trim();
-
-      parsedList.push({
-        id: `${backendQ.id || "v"}-sub-${qNum}`,
-        displayIndex: virtualIndex++,
-        questionText: `Question text inferred from context breakdown parameters.`,
-        correctAnswer: correctAnswer || "See Solution Core",
-        explanation: explanation || contentBlock,
-        type: "Objective"
-      });
-    }
-
-    // Fallback: If the text block doesn't match standard multi-question lists, render it normally
-    if (!foundSubQuestions) {
-      parsedList.push({
-        id: backendQ.id || `fallback-${virtualIndex}`,
-        displayIndex: virtualIndex++,
-        questionText: backendQ.question || "Open Analysis Window",
-        correctAnswer: backendQ.correct_answer || "Refer to core evaluation",
-        explanation: rawText,
-        type: backendQ.type || "Core"
-      });
-    }
-  });
-
-  return parsedList;
 }
 
 export default function SCodeAI({
@@ -120,9 +29,7 @@ export default function SCodeAI({
   setPdfs,
   solveAI,
   loadingAI,
-  aiStage,
-  questions,
-  paperId,
+  answer,
   theme,
   setTheme
 }: Props) {
@@ -132,29 +39,20 @@ export default function SCodeAI({
   const [programmes, setProgrammes] = useState<PDFItem[]>([]);
 
   const [loading, setLoading] = useState(false);
+  const [downloads, setDownloads] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPDF, setSelectedPDF] = useState<PDFItem | null>(null);
 
   const [chat, setChat] = useState<ChatMessage[]>([]);
   const [question, setQuestion] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
-  const [activeQuestionTab, setActiveQuestionTab] = useState<string>("");
+  const [showInstructions, setShowInstructions] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
-  const workspaceRef = useRef<HTMLDivElement | null>(null);
-
-  // Transform backend payload into clean atomic questions immediately
-  const structuredQuestions = unpackBackendQuestions(questions);
 
   useEffect(() => {
     loadUniversities();
   }, []);
-
-  useEffect(() => {
-    if (structuredQuestions.length > 0) {
-      setActiveQuestionTab(structuredQuestions[0].id);
-    }
-  }, [questions]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -164,7 +62,13 @@ export default function SCodeAI({
     try {
       setLoading(true);
       const data = await fetchFolder("");
-      setUniversities(data.filter((item: any) => item.type === "dir" && item.name.toLowerCase() === "university of ghana(ug)"));
+      const filtered = data.filter((item: any) => {
+        return (
+          item.type === "dir" &&
+          item.name.toLowerCase() === "university of ghana(ug)"
+        );
+      });
+      setUniversities(filtered);
     } catch (error) {
       console.error("Repository error:", error);
     } finally {
@@ -185,19 +89,25 @@ export default function SCodeAI({
   }
 
   async function selectUniversity(path: string) {
-    setLevels([]); setSemesters([]); setProgrammes([]); setPdfs([]);
+    setLevels([]);
+    setSemesters([]);
+    setProgrammes([]);
+    setPdfs([]);
     if (!path) return;
     await loadFolder(path, setLevels);
   }
 
   async function selectLevel(path: string) {
-    setSemesters([]); setProgrammes([]); setPdfs([]);
+    setSemesters([]);
+    setProgrammes([]);
+    setPdfs([]);
     if (!path) return;
     await loadFolder(path, setSemesters);
   }
 
   async function selectSemester(path: string) {
-    setProgrammes([]); setPdfs([]);
+    setProgrammes([]);
+    setPdfs([]);
     if (!path) return;
     await loadFolder(path, setProgrammes);
   }
@@ -206,7 +116,8 @@ export default function SCodeAI({
     try {
       setLoading(true);
       const data = await fetchFolder(path);
-      setPdfs(data.filter((item: any) => item.name.toLowerCase().endsWith(".pdf")));
+      const files = data.filter((item: any) => item.name.toLowerCase().endsWith(".pdf"));
+      setPdfs(files);
     } catch (error) {
       console.error(error);
     } finally {
@@ -215,39 +126,48 @@ export default function SCodeAI({
   }
 
   function getPDFUrl(pdf: PDFItem) {
-    return "https://raw.githubusercontent.com/SCodeGit/SCCOEPASCO/main/" + pdf.path.split("/").map(encodeURIComponent).join("/");
+    return (
+      "https://raw.githubusercontent.com/SCodeGit/SCCOEPASCO/main/" +
+      pdf.path
+        .split("/")
+        .map((part) => encodeURIComponent(part))
+        .join("/")
+    );
   }
 
   function openPDF(pdf: PDFItem) {
-    window.open(getPDFUrl(pdf), "_blank");
+    const url = getPDFUrl(pdf);
+    setDownloads((prev) => [pdf.name, ...prev]);
+    window.open(url, "_blank");
   }
 
-  function handleSolveAI(pdf: PDFItem) {
-    setSelectedPDF(pdf);
-    setChat([]);
-    solveAI(getPDFUrl(pdf), pdf.name);
-    
-    if (workspaceRef.current) {
-      workspaceRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  }
+  const filteredPdfs = pdfs.filter((pdf) =>
+    pdf.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   async function sendChat() {
     if (!question.trim() || !selectedPDF) return;
+
     const userMessage = question;
     setChat((prev) => [...prev, { role: "user", content: userMessage }]);
     setQuestion("");
     setChatLoading(true);
 
     try {
-      const baseUrl = (process.env.NEXT_PUBLIC_AI_API || "https://scode-academic-ai-v2.onrender.com").replace(/\/+$/, "");
-      const response = await fetch(`${baseUrl}/api/ai/chat`, {
+      const response = await fetch(process.env.NEXT_PUBLIC_AI_API + "/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ paper_id: paperId || undefined, filename: selectedPDF.name, question: userMessage })
+        body: JSON.stringify({
+          filename: selectedPDF.name,
+          question: userMessage
+        })
       });
+
       const data = await response.json();
-      setChat((prev) => [...prev, { role: "ai", content: data.answer || data.response || "No contextual clarification received." }]);
+      setChat((prev) => [
+        ...prev,
+        { role: "ai", content: data.answer || "No response received." }
+      ]);
     } catch (error) {
       setChat((prev) => [...prev, { role: "ai", content: "AI connection failed." }]);
     } finally {
@@ -255,24 +175,78 @@ export default function SCodeAI({
     }
   }
 
-  const activeQuestion = structuredQuestions.find((q) => q.id === activeQuestionTab);
-
   return (
     <div className="scode-wrapper">
+      {/* 1. Main Dynamic Layout Title */}
+      <h1 className="main-title text-center font-extrabold my-2">
+        Colleges of Education Past Questions
+      </h1>
+
+      {/* 2. Top Navigation Header featuring Triple Branding Logos */}
       <header className="topbar">
         <div className="brand">
-          <span className="brand-logo">🎓</span>
-          <div className="brand-text"><h1 className="main-title">SCode PastAI</h1></div>
+          <div className="top-logos flex gap-2 items-center">
+            <img src="https://raw.githubusercontent.com/SCodeGit/trial/main/WhatsApp%20Image%202025-10-29%20at%2021.29.26_b1bcd9d3.jpg" alt="Logo 1" className="h-8 w-auto object-contain" />
+            <img src="https://raw.githubusercontent.com/SCodeGit/trial/main/WhatsApp%20Image%202025-10-29%20at%2021.28.30_968e228b.jpg" alt="Logo 2" className="h-8 w-auto object-contain" />
+            <img src="https://raw.githubusercontent.com/SCodeGit/trial/main/WhatsApp%20Image%202025-10-29%20at%2021.31.34_5c11e8e8.jpg" alt="Logo 3" className="h-8 w-auto object-contain" />
+          </div>
         </div>
+
         <div className="search-wrapper">
-          <input className="search" placeholder="Search loaded papers..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+          <input
+            className="search"
+            placeholder="Search loaded papers..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
+
         <div className="theme-toggle-group">
-          <button className={`theme-btn ${theme === "light" ? "active" : ""}`} onClick={() => setTheme("light")}>☀️</button>
-          <button className={`theme-btn ${theme === "dark" ? "active" : ""}`} onClick={() => setTheme("dark")}>🌙</button>
-          <button className={`theme-btn ${theme === "system" ? "active" : ""}`} onClick={() => setTheme("system")}>🖥️</button>
+          <button
+            className={`theme-btn ${theme === "light" ? "active" : ""}`}
+            onClick={() => setTheme("light")}
+            title="Light Mode"
+          >
+            ☀️
+          </button>
+          <button
+            className={`theme-btn ${theme === "dark" ? "active" : ""}`}
+            onClick={() => setTheme("dark")}
+            title="Dark Mode"
+          >
+            🌙
+          </button>
+          <button
+            className={`theme-btn ${theme === "system" ? "active" : ""}`}
+            onClick={() => setTheme("system")}
+            title="Use System Preference"
+          >
+            🖥️
+          </button>
         </div>
       </header>
+
+      {/* 3. Thematic Tagline Subtext */}
+      <p className="tagline text-center font-semibold text-sm tracking-wide my-1">
+        Empowering Learning Through Past Questions
+      </p>
+
+      {/* 4. Dropdown Trainee Instruction Drawer Panel */}
+      <div className="instructions-container my-2 max-w-7xl mx-auto px-4">
+        <button
+          className="instructions-toggle w-full py-2 px-4 rounded-lg font-bold text-center transition bg-gray-100 dark:bg-gray-800"
+          onClick={() => setShowInstructions(!showInstructions)}
+        >
+          {showInstructions ? "Hide Instructions For Trainees" : "View Instructions For Trainees"}
+        </button>
+        {showInstructions && (
+          <div className="instructions-content mt-2 p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-zinc-900 transition-all">
+            <p className="text-sm leading-relaxed">
+              <strong>Trainee Guide:</strong> Use the filtering panel below to sort by University, Level, Semester, and Programme. Once the past papers load, select <strong>Solve AI</strong> to view complete step-by-step guidance on the classroom workspace panel.
+            </p>
+          </div>
+        )}
+      </div>
 
       <div className="dashboard-grid">
         <div className="left-column">
@@ -281,45 +255,110 @@ export default function SCodeAI({
               <h2>Select Study Materials</h2>
               <p>Filter through your institution's repository below</p>
             </div>
+
             <div className="filters">
               <div className="filter-group">
                 <select onChange={(e) => selectUniversity(e.target.value)}>
                   <option value="">Select University</option>
-                  {universities.map((item) => <option key={item.path} value={item.path}>{item.name}</option>)}
+                  {universities.map((item) => (
+                    <option key={item.path} value={item.path}>
+                      {item.name}
+                    </option>
+                  ))}
                 </select>
               </div>
+
               <div className="filter-group">
                 <select disabled={!levels.length} onChange={(e) => selectLevel(e.target.value)}>
                   <option value="">Select Level</option>
-                  {levels.map((item) => <option key={item.path} value={item.path}>{item.name}</option>)}
+                  {levels.map((item) => (
+                    <option key={item.path} value={item.path}>
+                      {item.name}
+                    </option>
+                  ))}
                 </select>
               </div>
+
               <div className="filter-group">
                 <select disabled={!semesters.length} onChange={(e) => selectSemester(e.target.value)}>
                   <option value="">Select Semester</option>
-                  {semesters.map((item) => <option key={item.path} value={item.path}>{item.name}</option>)}
+                  {semesters.map((item) => (
+                    <option key={item.path} value={item.path}>
+                      {item.name}
+                    </option>
+                  ))}
                 </select>
               </div>
+
               <div className="filter-group">
                 <select disabled={!programmes.length} onChange={(e) => selectProgramme(e.target.value)}>
                   <option value="">Select Programme</option>
-                  {programmes.map((item) => <option key={item.path} value={item.path}>{item.name}</option>)}
+                  {programmes.map((item) => (
+                    <option key={item.path} value={item.path}>
+                      {item.name}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
 
-            {loading && <div className="loading-spinner-container"><div className="spinner"></div><p>Retrieving documents...</p></div>}
+            {loading && (
+              <div className="loading-spinner-container">
+                <div className="spinner"></div>
+                <p>Retrieving documents...</p>
+              </div>
+            )}
 
-            {!loading && pdfs.length > 0 && (
+            {!loading && filteredPdfs.length > 0 && (
               <div className="pdf-grid">
-                {pdfs.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).map((pdf) => (
+                {filteredPdfs.map((pdf) => (
                   <div className="pdf-card" key={pdf.path}>
                     <div className="pdf-icon">📄</div>
-                    <div className="pdf-details"><h3>{pdf.name.replace(".pdf", "")}</h3></div>
-                    <div className="actions">
-                      <button className="btn-secondary" onClick={() => openPDF(pdf)}>Download</button>
-                      <button className="ai" onClick={() => handleSolveAI(pdf)}>Solve with AI</button>
+                    <div className="pdf-details">
+                      <h3>{pdf.name.replace(".pdf", "")}</h3>
                     </div>
+                    <div className="actions">
+                      <button className="btn-secondary" onClick={() => openPDF(pdf)}>
+                        View Document
+                      </button>
+                      <button
+                        className="ai"
+                        onClick={() => {
+                          setSelectedPDF(pdf);
+                          setChat([]);
+                          solveAI(getPDFUrl(pdf), pdf.name);
+                        }}
+                      >
+                        🤖 Solve AI
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {!loading && pdfs.length > 0 && filteredPdfs.length === 0 && (
+              <p className="empty-state">No papers found matching "{searchQuery}"</p>
+            )}
+
+            {!loading && pdfs.length === 0 && (
+              <div className="empty-state">
+                <span className="empty-icon">📚</span>
+                <p>Select your University filters above to display documents.</p>
+              </div>
+            )}
+          </section>
+
+          <section className="recent">
+            <h3>Recent Downloads</h3>
+            {downloads.length === 0 ? (
+              <p className="empty-downloads">Your recently viewed documents will list here.</p>
+            ) : (
+              <div className="downloads-list">
+                {downloads.slice(0, 5).map((item, index) => (
+                  <div key={index} className="download-item">
+                    <span className="file-icon">✓</span>
+                    <p className="download-text">{item}</p>
                   </div>
                 ))}
               </div>
@@ -327,80 +366,83 @@ export default function SCodeAI({
           </section>
         </div>
 
-        <div className="right-column" ref={workspaceRef}>
+        <div className="right-column">
           <section className="ai-box">
             <div className="section-header">
-              <h2>SCode AI Solver</h2>
-              <p>Direct Past questions solver in house AI system</p>
+              <h2>🤖 AI Classroom Solver</h2>
+              <p>Advanced PDF examination analysis & solution generator</p>
             </div>
 
             <div className="ai-content">
               {loadingAI && (
                 <div className="ai-loading-state">
                   <div className="ai-pulse-scanner"></div>
-                  <p className="loading-stage-text">Stage: {aiStage.toUpperCase()}...</p>
+                  <p>Processing examination paper...</p>
+                  <span>Extracting text and generating answers.</span>
                 </div>
               )}
 
-              {!loadingAI && structuredQuestions.length > 0 && (
+              {!loadingAI && answer && (
                 <div className="answer-wrapper">
-                  <div className="question-tabs">
-                    {structuredQuestions.map((q) => (
-                      <button
-                        key={q.id}
-                        onClick={() => setActiveQuestionTab(q.id)}
-                        className={`tab-btn ${activeQuestionTab === q.id ? "active" : ""}`}
-                      >
-                        Q{q.displayIndex} ({q.type.toUpperCase()})
-                      </button>
-                    ))}
+                  <div className="answer-header">
+                    <span>Generated Solution</span>
+                    <button className="btn-copy" onClick={() => navigator.clipboard.writeText(answer)}>
+                      📋 Copy Text
+                    </button>
                   </div>
-
-                  {activeQuestion && (
-                    <div className="active-question-view">
-                      <div className="answer-header">
-                        <span className="workspace-query-label">Isolated Workspace Query Element</span>
-                        <button 
-                          className="btn-copy" 
-                          onClick={() => navigator.clipboard.writeText(`Answer: ${activeQuestion.correctAnswer}\nExplanation: ${activeQuestion.explanation}`)}
-                        >
-                          📋 Copy Solution
-                        </button>
-                      </div>
-
-                      <div className="answer">
-                        {activeQuestion.correctAnswer && (
-                          <div className="correct-choice-row">
-                            <strong className="accent-label">Correct Option: </strong> 
-                            <span className="badge-choice">{activeQuestion.correctAnswer}</span>
-                          </div>
-                        )}
-                        <h4 className="solution-title font-bold mt-4">Analytical Explanation & Details:</h4>
-                        <div className="solution-output">{activeQuestion.explanation}</div>
-                      </div>
-                    </div>
-                  )}
+                  <div className="answer">{answer}</div>
                 </div>
               )}
 
-              {selectedPDF && !loadingAI && (
+              {selectedPDF && (
                 <div className="chat-box">
-                  <h3>💬 Ask follow-up question regarding this paper</h3>
+                  <h3>💬 Ask about this paper</h3>
                   <div className="messages">
-                    {chat.map((msg, idx) => <div key={idx} className={msg.role === "user" ? "user-message" : "ai-message"}>{msg.content}</div>)}
-                    {chatLoading && <div className="ai-message thinking-state">SCodeAI Thinking...</div>}
+                    {chat.map((msg, index) => (
+                      <div key={index} className={msg.role === "user" ? "user-message" : "ai-message"}>
+                        {msg.content}
+                      </div>
+                    ))}
+                    {chatLoading && <div className="ai-message">Thinking...</div>}
                     <div ref={messagesEndRef} />
                   </div>
+
                   <div className="chat-input">
-                    <input value={question} onChange={(e) => setQuestion(e.target.value)} onKeyDown={(e) => e.key === "Enter" && sendChat()} placeholder="Ask anything about this paper..." />
-                    <button className="btn-send-chat" onClick={sendChat}>Send</button>
+                    <input
+                      value={question}
+                      onChange={(e) => setQuestion(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") sendChat();
+                      }}
+                      placeholder="Ask anything about this paper..."
+                    />
+                    <button onClick={sendChat}>Send</button>
                   </div>
+                </div>
+              )}
+
+              {!loadingAI && !answer && !selectedPDF && (
+                <div className="ai-placeholder">
+                  <div className="placeholder-graphic">✨</div>
+                  <h3>Ready for analysis</h3>
+                  <p>
+                    Select any PDF on the left and click <strong>Solve AI</strong>. The AI will analyse the examination paper and allow you to ask follow-up questions.
+                  </p>
                 </div>
               )}
             </div>
           </section>
         </div>
       </div>
+
+      <footer>
+        <p>
+          © {new Date().getFullYear()} SCode Academic AI • ATUBRA ABRAHAM •{" "}
+          <a href="https://scodegit.github.io/scode.git.io/" target="_blank" rel="noopener noreferrer">
+            SCode  
+          </a>
+        </p>
+      </footer>
     </div>
   );
 }
