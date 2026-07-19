@@ -27,85 +27,92 @@ interface Props {
   setTheme: (theme: "system" | "light" | "dark") => void;
 }
 
-// Structured UI block format for messy text strings
-interface ParsedContent {
+interface StructuredQuestion {
+  id: string;
+  displayIndex: number;
   questionText: string;
-  options: Record<string, string>;
   correctAnswer: string;
   explanation: string;
+  type: string;
 }
 
 /**
- * Parses messy, markdown-heavy strings returned in backend solutions
- * and cleanly isolates the components for standard UI rendering.
+ * Super-Parser: Intercepts the backend's messy text block, identifies if it contains
+ * multiple numbered questions, and splits them into clean, separate virtual UI entities.
  */
-function parseMessySolution(rawString: string, activeQ: QuestionData): ParsedContent {
-  if (!rawString) {
-    return {
-      questionText: activeQ.question || "",
-      options: activeQ.options || {},
-      correctAnswer: activeQ.correct_answer || "",
-      explanation: ""
-    };
-  }
+function unpackBackendQuestions(rawQuestions: QuestionData[]): StructuredQuestion[] {
+  if (!rawQuestions || rawQuestions.length === 0) return [];
 
-  // Remove bold markdown styling variations inside key titles
-  let cleanStr = rawString
-    .replace(/\*\*Answer:\*\*/gi, "Answer:")
-    .replace(/\*\*Correct Answer:\*\*/gi, "Answer:")
-    .replace(/\*\*Explanation:\*\*/gi, "Explanation:")
-    .replace(/Correct Answer:\s*/gi, "Answer: ");
+  const parsedList: StructuredQuestion[] = [];
+  let virtualIndex = 1;
 
-  let questionText = activeQ.question || "";
-  let options: Record<string, string> = { ...(activeQ.options || {}) };
-  let correctAnswer = activeQ.correct_answer || "";
-  let explanation = "";
+  rawQuestions.forEach((backendQ) => {
+    const rawText = backendQ.solution || backendQ.explanation || "";
+    
+    // Look for lines starting with "1. ", "2. ", "Question 1:", etc.
+    const questionBlockRegex = /(?:^|\n)(?:\*\*|\b)?(?:Question\s+)?(\d+)[.)]\s*(.*?)(?=(?:\n(?:\*\*|\b)?(?:Question\s+)?\d+[.)])|$)/gs;
+    
+    let match;
+    let foundSubQuestions = false;
 
-  // 1. Extract Explanation Block
-  if (cleanStr.includes("Explanation:")) {
-    const parts = cleanStr.split("Explanation:");
-    explanation = parts[1].trim();
-    cleanStr = parts[0];
-  }
+    // Reset regex index for safety
+    questionBlockRegex.lastIndex = 0;
 
-  // 2. Extract Answer Block
-  if (cleanStr.includes("Answer:")) {
-    const parts = cleanStr.split("Answer:");
-    correctAnswer = parts[1].replace(/^[A-D]\.\s*/i, "").trim();
-    // Strip trailing stars or dots if present
-    correctAnswer = correctAnswer.replace(/^[:\s*–-]+/, "").trim();
-    cleanStr = parts[0];
-  }
+    while ((match = questionBlockRegex.exec(rawText)) !== null) {
+      foundSubQuestions = true;
+      const qNum = match[1];
+      const contentBlock = match[2].trim();
 
-  // 3. Extract and Parse Options (if they were dumped inline into the string text)
-  const optionRegex = /(?:^|\n)\s*[*+-]?\s*\*\*?([A-D])\.\*\*?\s*([^\n]+)/g;
-  let match;
-  let hasParsedOptions = false;
-  
-  while ((match = optionRegex.exec(cleanStr)) !== null) {
-    hasParsedOptions = true;
-    options[match[1].toUpperCase()] = match[2].trim();
-  }
+      // Within this individual block, extract the answer and explanation markers
+      let correctAnswer = "";
+      let explanation = contentBlock;
 
-  // 4. Clean up any remaining question headers or prefix digits left over
-  if (hasParsedOptions) {
-    const firstOptionIdx = cleanStr.search(/(?:^|\n)\s*[*+-]?\s*\*\*?[A-D]\./);
-    if (firstOptionIdx !== -1) {
-      questionText = cleanStr.substring(0, firstOptionIdx).trim();
+      // Extract specific bold answer selections e.g. "**B. first aid**" or "B. first aid"
+      const answerRegex = /(?:\*\*Answer:\*\*|\*\*Correct Answer:\*\*|Correct Answer:)\s*(.*?)(?:\n|$)/i;
+      const inlineAnswerRegex = /[*+-]?\s*\*?([A-D]\.\s*[^*_\n]+)\*?/i;
+      
+      let answerMatch = contentBlock.match(answerRegex) || contentBlock.match(inlineAnswerRegex);
+      
+      if (answerMatch) {
+        correctAnswer = answerMatch[1].replace(/\*+/g, "").trim();
+      }
+
+      // Isolate explanation text if the backend explicitly marked it
+      if (contentBlock.includes("Explanation:")) {
+        const parts = contentBlock.split("Explanation:");
+        explanation = parts[1].replace(/\*+/g, "").trim();
+      } else if (answerMatch) {
+        // Clean up text if explanation wasn't labeled explicitly
+        explanation = contentBlock.replace(answerMatch[0], "").trim();
+      }
+
+      // Clean markdown bold tags off the text variables
+      explanation = explanation.replace(/\*+/g, "").trim();
+
+      parsedList.push({
+        id: `${backendQ.id || "v"}-sub-${qNum}`,
+        displayIndex: virtualIndex++,
+        questionText: `Question text inferred from context breakdown parameters.`,
+        correctAnswer: correctAnswer || "See Solution Core",
+        explanation: explanation || contentBlock,
+        type: "Objective"
+      });
     }
-  } else if (cleanStr.trim() && !activeQ.question) {
-    questionText = cleanStr.trim();
-  }
 
-  // Strip question number markers like "**21. " out of the finalized header text
-  questionText = questionText.replace(/^\s*\*\*?\d+\.\s*\*\*?/, "").trim();
+    // Fallback: If the text block doesn't match standard multi-question lists, render it normally
+    if (!foundSubQuestions) {
+      parsedList.push({
+        id: backendQ.id || `fallback-${virtualIndex}`,
+        displayIndex: virtualIndex++,
+        questionText: backendQ.question || "Open Analysis Window",
+        correctAnswer: backendQ.correct_answer || "Refer to core evaluation",
+        explanation: rawText,
+        type: backendQ.type || "Core"
+      });
+    }
+  });
 
-  return {
-    questionText,
-    options,
-    correctAnswer: correctAnswer || activeQ.correct_answer || "",
-    explanation: explanation || cleanStr.trim()
-  };
+  return parsedList;
 }
 
 export default function SCodeAI({
@@ -136,13 +143,16 @@ export default function SCodeAI({
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const workspaceRef = useRef<HTMLDivElement | null>(null);
 
+  // Transform backend payload into clean atomic questions immediately
+  const structuredQuestions = unpackBackendQuestions(questions);
+
   useEffect(() => {
     loadUniversities();
   }, []);
 
   useEffect(() => {
-    if (questions && questions.length > 0) {
-      setActiveQuestionTab(questions[0].id);
+    if (structuredQuestions.length > 0) {
+      setActiveQuestionTab(structuredQuestions[0].id);
     }
   }, [questions]);
 
@@ -154,13 +164,7 @@ export default function SCodeAI({
     try {
       setLoading(true);
       const data = await fetchFolder("");
-      const filtered = data.filter((item: any) => {
-        return (
-          item.type === "dir" &&
-          item.name.toLowerCase() === "university of ghana(ug)"
-        );
-      });
-      setUniversities(filtered);
+      setUniversities(data.filter((item: any) => item.type === "dir" && item.name.toLowerCase() === "university of ghana(ug)"));
     } catch (error) {
       console.error("Repository error:", error);
     } finally {
@@ -181,37 +185,28 @@ export default function SCodeAI({
   }
 
   async function selectUniversity(path: string) {
-    setLevels([]);
-    setSemesters([]);
-    setProgrammes([]);
-    setPdfs([]);
+    setLevels([]); setSemesters([]); setProgrammes([]); setPdfs([]);
     if (!path) return;
     await loadFolder(path, setLevels);
   }
 
   async function selectLevel(path: string) {
-    setSemesters([]);
-    setProgrammes([]);
-    setPdfs([]);
+    setSemesters([]); setProgrammes([]); setPdfs([]);
     if (!path) return;
     await loadFolder(path, setSemesters);
   }
 
   async function selectSemester(path: string) {
-    setProgrammes([]);
-    setPdfs([]);
+    setProgrammes([]); setPdfs([]);
     if (!path) return;
-    await loadFolder(path, setSemesters);
+    await loadFolder(path, setProgrammes);
   }
 
   async function selectProgramme(path: string) {
     try {
       setLoading(true);
       const data = await fetchFolder(path);
-      const files = data.filter((item: any) =>
-        item.name.toLowerCase().endsWith(".pdf")
-      );
-      setPdfs(files);
+      setPdfs(data.filter((item: any) => item.name.toLowerCase().endsWith(".pdf")));
     } catch (error) {
       console.error(error);
     } finally {
@@ -220,18 +215,11 @@ export default function SCodeAI({
   }
 
   function getPDFUrl(pdf: PDFItem) {
-    return (
-      "https://raw.githubusercontent.com/SCodeGit/SCCOEPASCO/main/" +
-      pdf.path
-        .split("/")
-        .map((part) => encodeURIComponent(part))
-        .join("/")
-    );
+    return "https://raw.githubusercontent.com/SCodeGit/SCCOEPASCO/main/" + pdf.path.split("/").map(encodeURIComponent).join("/");
   }
 
   function openPDF(pdf: PDFItem) {
-    const url = getPDFUrl(pdf);
-    window.open(url, "_blank");
+    window.open(getPDFUrl(pdf), "_blank");
   }
 
   function handleSolveAI(pdf: PDFItem) {
@@ -240,20 +228,12 @@ export default function SCodeAI({
     solveAI(getPDFUrl(pdf), pdf.name);
     
     if (workspaceRef.current) {
-      workspaceRef.current.scrollIntoView({
-        behavior: "smooth",
-        block: "start"
-      });
+      workspaceRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   }
 
-  const filteredPdfs = pdfs.filter((pdf) =>
-    pdf.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   async function sendChat() {
     if (!question.trim() || !selectedPDF) return;
-
     const userMessage = question;
     setChat((prev) => [...prev, { role: "user", content: userMessage }]);
     setQuestion("");
@@ -263,16 +243,9 @@ export default function SCodeAI({
       const baseUrl = (process.env.NEXT_PUBLIC_AI_API || "https://scode-academic-ai-v2.onrender.com").replace(/\/+$/, "");
       const response = await fetch(`${baseUrl}/api/ai/chat`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          paper_id: paperId || undefined,
-          filename: selectedPDF.name,
-          question: userMessage
-        })
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paper_id: paperId || undefined, filename: selectedPDF.name, question: userMessage })
       });
-
       const data = await response.json();
       setChat((prev) => [...prev, { role: "ai", content: data.answer || data.response || "No contextual clarification received." }]);
     } catch (error) {
@@ -282,54 +255,22 @@ export default function SCodeAI({
     }
   }
 
-  const activeQuestion = questions.find((q) => q.id === activeQuestionTab);
-  
-  // Clean up data formatting constraints on execution loop
-  const parsedData = activeQuestion 
-    ? parseMessySolution(activeQuestion.solution || activeQuestion.explanation || "", activeQuestion)
-    : null;
+  const activeQuestion = structuredQuestions.find((q) => q.id === activeQuestionTab);
 
   return (
     <div className="scode-wrapper">
       <header className="topbar">
         <div className="brand">
           <span className="brand-logo">🎓</span>
-          <div className="brand-text">
-            <h1 className="main-title">SCode PastAI</h1>
-          </div>
+          <div className="brand-text"><h1 className="main-title">SCode PastAI</h1></div>
         </div>
-
         <div className="search-wrapper">
-          <input
-            className="search"
-            placeholder="Search loaded papers..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+          <input className="search" placeholder="Search loaded papers..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
         </div>
-
         <div className="theme-toggle-group">
-          <button
-            className={`theme-btn ${theme === "light" ? "active" : ""}`}
-            onClick={() => setTheme("light")}
-            title="Light Mode"
-          >
-            ☀️
-          </button>
-          <button
-            className={`theme-btn ${theme === "dark" ? "active" : ""}`}
-            onClick={() => setTheme("dark")}
-            title="Dark Mode"
-          >
-            🌙
-          </button>
-          <button
-            className={`theme-btn ${theme === "system" ? "active" : ""}`}
-            onClick={() => setTheme("system")}
-            title="Use System Preference"
-          >
-            🖥️
-          </button>
+          <button className={`theme-btn ${theme === "light" ? "active" : ""}`} onClick={() => setTheme("light")}>☀️</button>
+          <button className={`theme-btn ${theme === "dark" ? "active" : ""}`} onClick={() => setTheme("dark")}>🌙</button>
+          <button className={`theme-btn ${theme === "system" ? "active" : ""}`} onClick={() => setTheme("system")}>🖥️</button>
         </div>
       </header>
 
@@ -340,89 +281,47 @@ export default function SCodeAI({
               <h2>Select Study Materials</h2>
               <p>Filter through your institution's repository below</p>
             </div>
-
             <div className="filters">
               <div className="filter-group">
                 <select onChange={(e) => selectUniversity(e.target.value)}>
                   <option value="">Select University</option>
-                  {universities.map((item) => (
-                    <option key={item.path} value={item.path}>
-                      {item.name}
-                    </option>
-                  ))}
+                  {universities.map((item) => <option key={item.path} value={item.path}>{item.name}</option>)}
                 </select>
               </div>
-
               <div className="filter-group">
                 <select disabled={!levels.length} onChange={(e) => selectLevel(e.target.value)}>
                   <option value="">Select Level</option>
-                  {levels.map((item) => (
-                    <option key={item.path} value={item.path}>
-                      {item.name}
-                    </option>
-                  ))}
+                  {levels.map((item) => <option key={item.path} value={item.path}>{item.name}</option>)}
                 </select>
               </div>
-
               <div className="filter-group">
                 <select disabled={!semesters.length} onChange={(e) => selectSemester(e.target.value)}>
                   <option value="">Select Semester</option>
-                  {semesters.map((item) => (
-                    <option key={item.path} value={item.path}>
-                      {item.name}
-                    </option>
-                  ))}
+                  {semesters.map((item) => <option key={item.path} value={item.path}>{item.name}</option>)}
                 </select>
               </div>
-
               <div className="filter-group">
                 <select disabled={!programmes.length} onChange={(e) => selectProgramme(e.target.value)}>
                   <option value="">Select Programme</option>
-                  {programmes.map((item) => (
-                    <option key={item.path} value={item.path}>
-                      {item.name}
-                    </option>
-                  ))}
+                  {programmes.map((item) => <option key={item.path} value={item.path}>{item.name}</option>)}
                 </select>
               </div>
             </div>
 
-            {loading && (
-              <div className="loading-spinner-container">
-                <div className="spinner"></div>
-                <p>Retrieving documents...</p>
-              </div>
-            )}
+            {loading && <div className="loading-spinner-container"><div className="spinner"></div><p>Retrieving documents...</p></div>}
 
-            {!loading && filteredPdfs.length > 0 && (
+            {!loading && pdfs.length > 0 && (
               <div className="pdf-grid">
-                {filteredPdfs.map((pdf) => (
+                {pdfs.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).map((pdf) => (
                   <div className="pdf-card" key={pdf.path}>
                     <div className="pdf-icon">📄</div>
-                    <div className="pdf-details">
-                      <h3>{pdf.name.replace(".pdf", "")}</h3>
-                    </div>
+                    <div className="pdf-details"><h3>{pdf.name.replace(".pdf", "")}</h3></div>
                     <div className="actions">
-                      <button className="btn-secondary" onClick={() => openPDF(pdf)}>
-                        Download Document
-                      </button>
-                      <button className="ai" onClick={() => handleSolveAI(pdf)}>
-                         Solve with AI
-                      </button>
+                      <button className="btn-secondary" onClick={() => openPDF(pdf)}>Download</button>
+                      <button className="ai" onClick={() => handleSolveAI(pdf)}>Solve with AI</button>
                     </div>
                   </div>
                 ))}
-              </div>
-            )}
-
-            {!loading && pdfs.length > 0 && filteredPdfs.length === 0 && (
-              <p className="empty-state">No papers found matching "{searchQuery}"</p>
-            )}
-
-            {!loading && pdfs.length === 0 && (
-              <div className="empty-state">
-                <span className="empty-icon">📚</span>
-                <p>Select your University filters above to display documents.</p>
               </div>
             )}
           </section>
@@ -440,64 +339,44 @@ export default function SCodeAI({
                 <div className="ai-loading-state">
                   <div className="ai-pulse-scanner"></div>
                   <p className="loading-stage-text">Stage: {aiStage.toUpperCase()}...</p>
-                  <p>Processing examination paper structure configuration protocols.</p>
                 </div>
               )}
 
-              {!loadingAI && questions.length > 0 && (
+              {!loadingAI && structuredQuestions.length > 0 && (
                 <div className="answer-wrapper">
                   <div className="question-tabs">
-                    {questions.map((q, idx) => (
+                    {structuredQuestions.map((q) => (
                       <button
-                        key={q.id || `q-${idx}`}
+                        key={q.id}
                         onClick={() => setActiveQuestionTab(q.id)}
                         className={`tab-btn ${activeQuestionTab === q.id ? "active" : ""}`}
                       >
-                        Q{idx + 1} ({q.type.toUpperCase()})
+                        Q{q.displayIndex} ({q.type.toUpperCase()})
                       </button>
                     ))}
                   </div>
 
-                  {activeQuestion && parsedData && (
+                  {activeQuestion && (
                     <div className="active-question-view">
                       <div className="answer-header">
-                        <span className="workspace-query-label">Active Workspace Query Element</span>
+                        <span className="workspace-query-label">Isolated Workspace Query Element</span>
                         <button 
                           className="btn-copy" 
-                          onClick={() => navigator.clipboard.writeText(
-                            `Question: ${parsedData.questionText}\n` +
-                            `Answer: ${parsedData.correctAnswer}\n` +
-                            `Explanation: ${parsedData.explanation}`
-                          )}
+                          onClick={() => navigator.clipboard.writeText(`Answer: ${activeQuestion.correctAnswer}\nExplanation: ${activeQuestion.explanation}`)}
                         >
-                          📋 Copy answers and work more on it
+                          📋 Copy Solution
                         </button>
                       </div>
 
-                      <div className="question-body">
-                        <h4 className="context-title">Question Context:</h4>
-                        <p className="context-text">{parsedData.questionText}</p>
-                        
-                        {Object.keys(parsedData.options).length > 0 && (
-                          <div className="options-block">
-                            {Object.entries(parsedData.options).map(([key, val]) => (
-                              <div key={key} className="option-item">
-                                <strong>{key}:</strong> {val}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
                       <div className="answer">
-                        {parsedData.correctAnswer && (
+                        {activeQuestion.correctAnswer && (
                           <div className="correct-choice-row">
-                            <strong className="accent-label">Correct Answer Choice: </strong> 
-                            <span className="badge-choice">{parsedData.correctAnswer}</span>
+                            <strong className="accent-label">Correct Option: </strong> 
+                            <span className="badge-choice">{activeQuestion.correctAnswer}</span>
                           </div>
                         )}
-                        <h4 className="solution-title">Analytical Core Solution:</h4>
-                        <div className="solution-output">{parsedData.explanation}</div>
+                        <h4 className="solution-title font-bold mt-4">Analytical Explanation & Details:</h4>
+                        <div className="solution-output">{activeQuestion.explanation}</div>
                       </div>
                     </div>
                   )}
@@ -506,62 +385,22 @@ export default function SCodeAI({
 
               {selectedPDF && !loadingAI && (
                 <div className="chat-box">
-                  <h3>💬 Ask strictly specific paper related questions</h3>
+                  <h3>💬 Ask follow-up question regarding this paper</h3>
                   <div className="messages">
-                    {chat.map((msg, index) => (
-                      <div
-                        key={index}
-                        className={msg.role === "user" ? "user-message" : "ai-message"}
-                      >
-                        {msg.content}
-                      </div>
-                    ))}
-                    {chatLoading && (
-                      <div className="ai-message thinking-state">
-                        SCodeAI Thinking...
-                      </div>
-                    )}
+                    {chat.map((msg, idx) => <div key={idx} className={msg.role === "user" ? "user-message" : "ai-message"}>{msg.content}</div>)}
+                    {chatLoading && <div className="ai-message thinking-state">SCodeAI Thinking...</div>}
                     <div ref={messagesEndRef} />
                   </div>
-
                   <div className="chat-input">
-                    <input
-                      value={question}
-                      onChange={(e) => setQuestion(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") sendChat();
-                      }}
-                      placeholder="Ask anything about this paper..."
-                    />
-                    <button className="btn-send-chat" onClick={sendChat}>
-                      Send
-                    </button>
+                    <input value={question} onChange={(e) => setQuestion(e.target.value)} onKeyDown={(e) => e.key === "Enter" && sendChat()} placeholder="Ask anything about this paper..." />
+                    <button className="btn-send-chat" onClick={sendChat}>Send</button>
                   </div>
-                </div>
-              )}
-
-              {!loadingAI && questions.length === 0 && !selectedPDF && (
-                <div className="ai-placeholder">
-                  <div className="placeholder-graphic">✨</div>
-                  <h3>Ready for analysis</h3>
-                  <p>
-                    Select any PDF and click <strong>Solve AI</strong>. The AI will analyze the examination paper and break down questions dynamically.
-                  </p>
                 </div>
               )}
             </div>
           </section>
         </div>
       </div>
-
-      <footer>
-        <p>
-          © {new Date().getFullYear()} SCode Academic AI •{" "}
-          <a href="https://scodegit.github.io/scode.git.io/" target="_blank" rel="noopener noreferrer">
-            SCode
-          </a>
-        </p>
-      </footer>
     </div>
   );
 }
