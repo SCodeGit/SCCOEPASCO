@@ -52,7 +52,9 @@ export default function SCodeAI({
   const [chatLoading, setChatLoading] = useState(false);
   const [activeQuestionTab, setActiveQuestionTab] = useState<string>("");
 
+  // Refs for auto-scrolling layout zones
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const workspaceRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     loadUniversities();
@@ -153,6 +155,21 @@ export default function SCodeAI({
     window.open(url, "_blank");
   }
 
+  // Triggered when clicking "Solve with AI"
+  function handleSolveAI(pdf: PDFItem) {
+    setSelectedPDF(pdf);
+    setChat([]);
+    solveAI(getPDFUrl(pdf), pdf.name);
+    
+    // Smooth scroll down to the right column workspace instantly
+    if (workspaceRef.current) {
+      workspaceRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+    }
+  }
+
   const filteredPdfs = pdfs.filter((pdf) =>
     pdf.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -234,7 +251,7 @@ export default function SCodeAI({
         </div>
       </header>
 
-      <div className="dashboard-grid" id="aiWorkspaceSection">
+      <div className="dashboard-grid">
         <div className="left-column">
           <section className="repository">
             <div className="section-header">
@@ -307,14 +324,7 @@ export default function SCodeAI({
                       <button className="btn-secondary" onClick={() => openPDF(pdf)}>
                         Download Document
                       </button>
-                      <button
-                        className="ai"
-                        onClick={() => {
-                          setSelectedPDF(pdf);
-                          setChat([]);
-                          solveAI(getPDFUrl(pdf), pdf.name);
-                        }}
-                      >
+                      <button className="ai" onClick={() => handleSolveAI(pdf)}>
                          Solve with AI
                       </button>
                     </div>
@@ -336,7 +346,8 @@ export default function SCodeAI({
           </section>
         </div>
 
-        <div className="right-column">
+        {/* Bound the workspaceRef directly to the target element container */}
+        <div className="right-column" ref={workspaceRef}>
           <section className="ai-box">
             <div className="section-header">
               <h2>SCode AI Solver</h2>
@@ -347,27 +358,19 @@ export default function SCodeAI({
               {loadingAI && (
                 <div className="ai-loading-state">
                   <div className="ai-pulse-scanner"></div>
-                  <p style={{ fontWeight: 600 }}>Stage: {aiStage.toUpperCase()}...</p>
+                  <p className="loading-stage-text">Stage: {aiStage.toUpperCase()}...</p>
                   <p>Processing examination paper structure configuration protocols.</p>
                 </div>
               )}
 
               {!loadingAI && questions.length > 0 && (
                 <div className="answer-wrapper">
-                  <div className="question-tabs" style={{ display: "flex", gap: "8px", overflowX: "auto", paddingBottom: "12px", borderBottom: "1px solid var(--border)", marginBottom: "16px" }}>
+                  <div className="question-tabs">
                     {questions.map((q, idx) => (
                       <button
                         key={q.id || `q-${idx}`}
                         onClick={() => setActiveQuestionTab(q.id)}
                         className={`tab-btn ${activeQuestionTab === q.id ? "active" : ""}`}
-                        style={{
-                          padding: "6px 12px",
-                          borderRadius: "6px",
-                          border: "1px solid var(--border)",
-                          background: activeQuestionTab === q.id ? "var(--accent)" : "var(--card)",
-                          color: activeQuestionTab === q.id ? "#fff" : "var(--text)",
-                          whiteSpace: "nowrap"
-                        }}
                       >
                         Q{idx + 1} ({q.type.toUpperCase()})
                       </button>
@@ -376,21 +379,21 @@ export default function SCodeAI({
 
                   {activeQuestion && (
                     <div className="active-question-view">
-                      <div className="answer-header" style={{ marginBottom: "12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <span style={{ fontWeight: 700 }}>Active Workspace Query Element</span>
+                      <div className="answer-header">
+                        <span className="workspace-query-label">Active Workspace Query Element</span>
                         <button className="btn-copy" onClick={() => navigator.clipboard.writeText(activeQuestion.solution || activeQuestion.explanation)}>
                           📋 Copy answers and work more on it
                         </button>
                       </div>
 
-                      <div className="question-body" style={{ background: "var(--card)", padding: "16px", borderRadius: "8px", border: "1px solid var(--border)", marginBottom: "16px" }}>
-                        <h4 style={{ margin: "0 0 10px 0", color: "var(--accent)" }}>Question Context:</h4>
-                        <p style={{ margin: 0, fontWeight: 500 }}>{activeQuestion.question}</p>
+                      <div className="question-body">
+                        <h4 className="context-title">Question Context:</h4>
+                        <p className="context-text">{activeQuestion.question}</p>
                         
                         {activeQuestion.options && (
-                          <div className="options-block" style={{ marginTop: "12px", display: "grid", gap: "8px" }}>
+                          <div className="options-block">
                             {Object.entries(activeQuestion.options).map(([key, val]) => (
-                              <div key={key} style={{ padding: "8px 12px", borderRadius: "6px", background: "var(--surface)", border: "1px solid var(--border)", fontSize: "14px" }}>
+                              <div key={key} className="option-item">
                                 <strong>{key}:</strong> {val}
                               </div>
                             ))}
@@ -398,15 +401,15 @@ export default function SCodeAI({
                         )}
                       </div>
 
-                      <div className="answer" style={{ marginBottom: "20px" }}>
+                      <div className="answer">
                         {activeQuestion.correct_answer && (
-                          <p style={{ margin: "0 0 10px 0" }}>
-                            <strong style={{ color: "var(--accent)" }}>Correct Answer Choice: </strong> 
-                            <span style={{ background: "var(--surface)", padding: "2px 8px", borderRadius: "4px", border: "1px solid var(--border)" }}>{activeQuestion.correct_answer}</span>
+                          <p className="correct-choice-row">
+                            <strong className="accent-label">Correct Answer Choice: </strong> 
+                            <span className="badge-choice">{activeQuestion.correct_answer}</span>
                           </p>
                         )}
-                        <h4 style={{ margin: "0 0 6px 0" }}>Analytical Core Solution:</h4>
-                        <div style={{ whiteSpace: "pre-wrap" }}>{activeQuestion.solution || activeQuestion.explanation}</div>
+                        <h4 className="solution-title">Analytical Core Solution:</h4>
+                        <div className="solution-output">{activeQuestion.solution || activeQuestion.explanation}</div>
                       </div>
                     </div>
                   )}
@@ -414,38 +417,27 @@ export default function SCodeAI({
               )}
 
               {selectedPDF && !loadingAI && (
-                <div className="chat-box" style={{ marginTop: "24px", borderTop: "1px solid var(--border)", paddingTop: "16px" }}>
+                <div className="chat-box">
                   <h3>💬 Ask strictly specific paper related questions</h3>
-                  <div className="messages" style={{ maxHeight: "250px", overflowY: "auto", display: "flex", flexDirection: "column", gap: "10px", marginBottom: "12px" }}>
+                  <div className="messages">
                     {chat.map((msg, index) => (
                       <div
                         key={index}
                         className={msg.role === "user" ? "user-message" : "ai-message"}
-                        style={{
-                          alignSelf: msg.role === "user" ? "flex-end" : "flex-start",
-                          background: msg.role === "user" ? "var(--accent)" : "var(--card)",
-                          color: msg.role === "user" ? "white" : "var(--text)",
-                          padding: "10px 14px",
-                          borderRadius: "12px",
-                          maxWidth: "85%",
-                          border: msg.role === "user" ? "none" : "1px solid var(--border)",
-                          fontSize: "14px"
-                        }}
                       >
                         {msg.content}
                       </div>
                     ))}
                     {chatLoading && (
-                      <div className="ai-message" style={{ alignSelf: "flex-start", background: "var(--card)", padding: "10px 14px", borderRadius: "12px", border: "1px solid var(--border)", fontSize: "14px", color: "var(--muted)" }}>
+                      <div className="ai-message thinking-state">
                         SCodeAI Thinking...
                       </div>
                     )}
                     <div ref={messagesEndRef} />
                   </div>
 
-                  <div className="chat-input" style={{ display: "flex", gap: "8px" }}>
+                  <div className="chat-input">
                     <input
-                      style={{ flex: 1, padding: "10px", borderRadius: "8px", border: "1px solid var(--border)", background: "var(--input)", color: "var(--text)" }}
                       value={question}
                       onChange={(e) => setQuestion(e.target.value)}
                       onKeyDown={(e) => {
@@ -453,7 +445,7 @@ export default function SCodeAI({
                       }}
                       placeholder="Ask anything about this paper..."
                     />
-                    <button style={{ background: "var(--accent)", color: "white", border: "none", padding: "0 16px", borderRadius: "8px" }} onClick={sendChat}>
+                    <button className="btn-send-chat" onClick={sendChat}>
                       Send
                     </button>
                   </div>

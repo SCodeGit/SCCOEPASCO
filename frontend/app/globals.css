@@ -1,3 +1,6 @@
+/* ==========================================================================
+   1. Dynamic Theme Architecture & Variables
+   ========================================================================== */
 :root {
   --background: #ffffff;
   --surface: #ffffff;
@@ -8,6 +11,9 @@
   --accent: #bf8b38;
   --accent-hover: #a3722c;
   --input: #ffffff;
+  --mark-bg: #ffff00;
+  --logo-orange: #ff9800;
+  --bg-overlay: rgba(0,0,0,0.54);
   --font-sans: 'Lato', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
@@ -21,8 +27,13 @@
   --accent: #bf8b38;
   --accent-hover: #d9a752;
   --input: #1f2937;
+  --mark-bg: #856600;
+  --bg-overlay: rgba(0,0,0,0.75);
 }
 
+/* ==========================================================================
+   2. Base System Normalizations
+   ========================================================================== */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -41,113 +52,132 @@ body {
 .scode-wrapper {
   max-width: 1440px;
   margin: 0 auto;
-  padding: 24px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
   min-height: 100vh;
 }
 
-/* TOPBAR */
-.topbar {
+@media (min-width: 768px) {
+  .scode-wrapper {
+    padding: 24px;
+    gap: 24px;
+  }
+}
+
+/* ==========================================================================
+   3. Main Title & Triple Logo Header (Mobile-First Style)
+   ========================================================================== */
+h1 {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: var(--text);
+  text-align: center;
+}
+
+@media (min-width: 768px) {
+  h1 {
+    font-size: 24px;
+    text-align: left;
+  }
+}
+
+.top-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
-  padding: 16px 24px;
+  gap: 16px;
+  padding: 12px 16px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-.brand {
+.top-logos {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
+  flex-wrap: nowrap;
 }
 
-.brand-logo {
-  font-size: 28px;
+.top-logos img {
+  height: 32px;
+  width: auto;
+  object-fit: contain;
+  border-radius: 4px;
 }
 
-.main-title {
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: -0.5px;
+@media (min-width: 768px) {
+  .top-logos img {
+    height: 44px;
+  }
+  .top-logos {
+    gap: 12px;
+  }
 }
 
-.search-wrapper {
-  flex: 1;
-  max-width: 500px;
-}
-
-.search {
-  width: 100%;
-  padding: 10px 16px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--input);
-  color: var(--text);
-  font-size: 14px;
-  outline: none;
-  transition: border-color 0.2s;
-}
-
-.search:focus {
-  border-color: var(--accent);
-}
-
-.theme-toggle-group {
-  display: flex;
+#theme-toggle {
   background: var(--card);
-  padding: 4px;
-  border-radius: 8px;
   border: 1px solid var(--border);
-}
-
-.theme-btn {
-  background: transparent;
-  border: none;
   font-size: 16px;
-  padding: 6px 12px;
-  border-radius: 6px;
+  padding: 8px 12px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: background 0.2s;
+  color: var(--text);
+  transition: transform 0.1s ease;
 }
 
-.theme-btn.active {
-  background: var(--surface);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+#theme-toggle:active {
+  transform: scale(0.95);
 }
 
-/* LAYOUT GRID */
+/* ==========================================================================
+   4. Application Grid Layout System
+   ========================================================================== */
 .dashboard-grid {
   display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  gap: 24px;
+  grid-template-columns: 1fr;
+  gap: 20px;
   align-items: start;
 }
 
-@media (max-width: 1024px) {
+@media (min-width: 1024px) {
   .dashboard-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 24px;
   }
 }
 
 .left-column, .right-column {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
 }
 
-/* SECTIONS & CARDS */
+@media (min-width: 768px) {
+  .left-column, .right-column {
+    gap: 24px;
+  }
+}
+
+/* ==========================================================================
+   5. Content Cards & Interface Elements
+   ========================================================================== */
 section {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 24px;
+  padding: 16px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+@media (min-width: 768px) {
+  section {
+    padding: 24px;
+  }
 }
 
 .section-header {
@@ -165,10 +195,15 @@ section {
   font-size: 14px;
 }
 
+mark {
+  background-color: var(--mark-bg);
+  color: inherit;
+}
+
 /* FILTERS */
 .filters {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 12px;
   margin-bottom: 24px;
 }
@@ -190,14 +225,17 @@ section {
   cursor: not-allowed;
 }
 
-/* FILE CARDS GRID */
+/* ==========================================================================
+   6. PDF Cards & Bulletproof Scroll Settings
+   ========================================================================== */
 .pdf-grid {
   display: flex;
   flex-direction: column;
   gap: 12px;
   max-height: 520px;
   overflow-y: auto;
-  padding-right: 4px;
+  overflow-x: hidden;
+  padding-right: 6px;
 }
 
 .pdf-card {
@@ -209,6 +247,8 @@ section {
   border: 1px solid var(--border);
   border-radius: 8px;
   transition: transform 0.15s ease;
+  flex-shrink: 0;
+  width: 100%;
 }
 
 .pdf-card:hover {
@@ -217,22 +257,29 @@ section {
 
 .pdf-icon {
   font-size: 24px;
+  flex-shrink: 0;
 }
 
 .pdf-details {
   flex: 1;
+  min-width: 0;
 }
 
 .pdf-details h3 {
   font-size: 14px;
   font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .actions {
   display: flex;
   gap: 8px;
+  flex-shrink: 0;
 }
 
+/* BUTTON CONTROLS */
 button {
   padding: 8px 14px;
   border-radius: 6px;
@@ -241,6 +288,7 @@ button {
   cursor: pointer;
   border: none;
   transition: background 0.2s, color 0.2s;
+  white-space: nowrap;
 }
 
 .btn-secondary {
@@ -262,7 +310,20 @@ button.ai:hover {
   background: var(--accent-hover);
 }
 
-/* RECENT DOWNLOADS */
+/* TARGET JUMP HIGHLIGHT MECHANIC */
+#ai-workspace {
+  scroll-margin-top: 20px;
+  transition: border-color 0.4s ease, box-shadow 0.4s ease;
+}
+
+#ai-workspace.highlighted-portal {
+  border-color: var(--accent);
+  box-shadow: 0 0 12px rgba(191, 139, 56, 0.35);
+}
+
+/* ==========================================================================
+   7. Secondary UI Modules (Downloads, Loaders, Utilities)
+   ========================================================================== */
 .recent h3 {
   font-size: 15px;
   margin-bottom: 12px;
@@ -294,7 +355,6 @@ button.ai:hover {
   text-overflow: ellipsis;
 }
 
-/* LOADERS & EMPTY STATES */
 .loading-spinner-container {
   display: flex;
   flex-direction: column;
@@ -356,7 +416,6 @@ button.ai:hover {
   margin-bottom: 12px;
 }
 
-/* WORKSPACE ACTIONS */
 .btn-copy {
   background: var(--card);
   border: 1px solid var(--border);
@@ -367,6 +426,21 @@ button.ai:hover {
 
 .btn-copy:hover {
   background: var(--border);
+}
+
+/* CUSTOM ACCENTED SCROLLBARS */
+.pdf-grid::-webkit-scrollbar {
+  width: 6px;
+}
+.pdf-grid::-webkit-scrollbar-track {
+  background: transparent;
+}
+.pdf-grid::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 10px;
+}
+.pdf-grid::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
 }
 
 /* FOOTER */
