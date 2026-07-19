@@ -1,36 +1,40 @@
 /* ==========================================================================
-   1. Dynamic Theme Architecture & Variables
+   1. Dynamic Theme Architecture & Variables (Stunning Glass Variant)
    ========================================================================== */
 :root {
-  /* Bright, decorative light mode */
-  --background: #bf8b38;       /* Gold accent background */
-  --surface: #ffffff;          /* Pure white cards/surfaces */
-  --card: #fdf6e3;             /* Soft cream for contrast */
-  --text: #1a1a1a;             /* Deep charcoal instead of pure black */
-  --muted: #4a5568;            /* Rich gray-blue for secondary text */
-  --border: #d97706;           /* Vibrant amber borders */
-  --accent: #2563eb;           /* Bright royal blue accent */
-  --accent-hover: #1d4ed8;     /* Deeper blue hover */
-  --input: #ffffff;            /* White input fields */
-  --mark-bg: #ffeb3b;          /* Bright yellow highlight */
-  --logo-orange: #ff9800;      /* Orange for logos */
-  --bg-overlay: rgba(0,0,0,0.25); /* Softer overlay for light mode */
-  --font-sans: 'Lato', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* High-end Glossy Warm Gold Base */
+  --background: linear-gradient(135deg, #d97706 0%, #bf8b38 50%, #78350f 100%);
+  --surface: rgba(255, 255, 255, 0.75);    /* Highly translucent reflective glass */
+  --card: rgba(253, 246, 227, 0.65);       /* Frosted warm cream accent plates */
+  --text: #0f172a;                          /* Polished slate ink for absolute contrast */
+  --muted: #334155;                         /* Deep graphite secondary indicators */
+  --border: rgba(255, 255, 255, 0.4);       /* Diamond-cut white inner edge reflection */
+  --accent: #1d4ed8;                        /* Deep luminous royal blue electric glow */
+  --accent-hover: #1e40af;                  /* Saturated blue hover element */
+  --input: rgba(255, 255, 255, 0.9);        /* Solid white inset utility elements */
+  --mark-bg: rgba(254, 240, 138, 0.9);      /* Soft velvet highlight pastel yellow */
+  --logo-orange: #f97316;
+  --bg-overlay: rgba(0, 0, 0, 0.05);
+  --glass-specular: rgba(255, 255, 255, 0.6); /* Core bright structural gleam line */
+  --glass-shadow: 0 8px 32px 0 rgba(120, 53, 15, 0.37);
+  --font-sans: 'Plus Jakarta Sans', 'Lato', -apple-system, sans-serif;
 }
 
 [data-theme="dark"] {
-  /* Keep dark mode as it is */
-  --background: #090d16;
-  --surface: #111827;
-  --card: #1f2937;
-  --text: #f9fafb;
-  --muted: #9ca3af;
-  --border: #374151;
-  --accent: #bf8b38;
-  --accent-hover: #d9a752;
-  --input: #1f2937;
-  --mark-bg: #856600;
-  --bg-overlay: rgba(0,0,0,0.75);
+  /* Futuristic Dark Cyber Obsidian Crystal Profile */
+  --background: linear-gradient(135deg, #020617 0%, #090d16 50%, #1e1b4b 100%);
+  --surface: rgba(17, 24, 39, 0.7);        /* Translucent obsidian deep space glass */
+  --card: rgba(31, 41, 55, 0.55);           /* Lower tier dark frosted plates */
+  --text: #f8fafc;                          /* Pure radiant white readability font */
+  --muted: #94a3b8;                         /* Cool cosmic silver secondary data */
+  --border: rgba(255, 255, 255, 0.08);      /* Subtle dark crystal rim reflection */
+  --accent: #fbbf24;                        /* Blazing neon gold core interaction token */
+  --accent-hover: #f59e0b;                  /* High-energy deep amber focus state */
+  --input: rgba(17, 24, 39, 0.85);          /* Intact solid dark controls */
+  --mark-bg: rgba(133, 102, 0, 0.5);        /* Protected burnished gold spotlight anchor */
+  --bg-overlay: rgba(0, 0, 0, 0.5);
+  --glass-specular: rgba(255, 255, 255, 0.15);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
 }
 
 /* ==========================================================================
@@ -43,12 +47,14 @@
 }
 
 body {
-  background-color: var(--background);
+  background: var(--background);
+  background-attachment: fixed;
   color: var(--text);
   font-family: var(--font-sans);
   min-height: 100vh;
   line-height: 1.5;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background 0.5s ease, color 0.3s ease;
+  overflow-x: hidden;
 }
 
 .scode-wrapper {
@@ -63,25 +69,26 @@ body {
 
 @media (min-width: 768px) {
   .scode-wrapper {
-    padding: 24px;
-    gap: 24px;
+    padding: 28px;
+    gap: 28px;
   }
 }
 
 /* ==========================================================================
-   3. Main Title & Triple Logo Header (Mobile-First Style)
+   3. Main Title & Triple Logo Header (Stunning Glassmorphism Effect)
    ========================================================================== */
 h1 {
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: -0.5px;
-  color: var(--accent); /* Make titles pop with accent color */
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: var(--text);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   text-align: center;
 }
 
 @media (min-width: 768px) {
   h1 {
-    font-size: 24px;
+    font-size: 26px;
     text-align: left;
   }
 }
@@ -91,11 +98,29 @@ h1 {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 12px 16px;
+  padding: 16px 24px;
   background: var(--surface);
-  border: 2px solid var(--border); /* Decorative amber border */
-  border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(217, 119, 6, 0.3); /* Amber glow */
+  
+  /* Glass Specular & Physics Engines */
+  backdrop-filter: blur(20px) saturate(190%);
+  -webkit-backdrop-filter: blur(20px) saturate(190%);
+  border: 1px solid var(--border);
+  border-top-color: var(--glass-specular);
+  border-left-color: var(--glass-specular);
+  border-radius: 16px;
+  box-shadow: var(--glass-shadow);
+  
+  position: relative;
+  overflow: hidden;
+}
+
+/* Slick light sheen overlay effect across headers */
+.top-bar::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -50%; width: 200%; height: 100%;
+  background: linear-gradient(60deg, transparent, rgba(255,255,255,0.1) 40%, rgba(255,255,255,0.2) 50%, transparent 60%);
+  pointer-events: none;
 }
 
 .top-logos {
@@ -106,40 +131,50 @@ h1 {
 }
 
 .top-logos img {
-  height: 32px;
+  height: 36px;
   width: auto;
   object-fit: contain;
-  border-radius: 4px;
-  border: 2px solid var(--accent); /* Decorative border around logos */
+  border-radius: 8px;
+  border: 1.5px solid var(--border);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.top-logos img:hover {
+  transform: translateY(-2px) scale(1.05);
 }
 
 @media (min-width: 768px) {
   .top-logos img {
-    height: 44px;
+    height: 46px;
   }
   .top-logos {
-    gap: 12px;
+    gap: 14px;
   }
 }
 
 #theme-toggle {
   background: var(--card);
-  border: 2px solid var(--accent);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(10px);
   font-size: 16px;
-  padding: 8px 12px;
-  border-radius: 8px;
+  padding: 10px 16px;
+  border-radius: 10px;
   cursor: pointer;
-  color: var(--accent);
-  transition: transform 0.1s ease, background 0.2s ease;
+  color: var(--text);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 #theme-toggle:hover {
-  background: var(--accent);
-  color: #ffffff;
+  background: var(--text);
+  color: var(--surface);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.15);
 }
 
 #theme-toggle:active {
-  transform: scale(0.95);
+  transform: scale(0.96);
 }
 
 /* ==========================================================================
@@ -155,7 +190,7 @@ h1 {
 @media (min-width: 1024px) {
   .dashboard-grid {
     grid-template-columns: 1.2fr 1fr;
-    gap: 24px;
+    gap: 28px;
   }
 }
 
@@ -167,80 +202,121 @@ h1 {
 
 @media (min-width: 768px) {
   .left-column, .right-column {
-    gap: 24px;
+    gap: 28px;
   }
 }
 
 /* ==========================================================================
-   5. Content Cards & Interface Elements
+   5. Content Cards & Premium Interface Blocks
    ========================================================================== */
 section {
   background: var(--surface);
-  border: 2px solid var(--border);
-  border-radius: 12px;
-  padding: 16px;
-  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25); /* Blue glow */
+  
+  /* Core Glassmorphism Stack */
+  backdrop-filter: blur(20px) saturate(190%);
+  -webkit-backdrop-filter: blur(20px) saturate(190%);
+  border: 1px solid var(--border);
+  border-top-color: var(--glass-specular);
+  border-left-color: var(--glass-specular);
+  
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: var(--glass-shadow);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+section:hover {
+  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.15), var(--glass-shadow);
 }
 
 @media (min-width: 768px) {
   section {
-    padding: 24px;
+    padding: 28px;
   }
 }
 
 .section-header {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .section-header h2 {
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 4px;
-  color: var(--accent); /* Accent headings */
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: var(--text);
+  letter-spacing: -0.01em;
 }
 
 .section-header p {
   color: var(--muted);
-  font-size: 14px;
+  font-size: 14.5px;
+  font-weight: 500;
 }
 
 mark {
   background-color: var(--mark-bg);
   color: #000;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+/* Dynamic Inner Workspace Modules */
+.card-sub-element {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
 }
 
 /* ==========================================================================
-   6. Buttons & Interactive Elements
+   6. Buttons & Luminous Interface Components
    ========================================================================== */
 button {
-  padding: 8px 14px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 700;
   cursor: pointer;
-  border: none;
-  transition: background 0.2s, color 0.2s;
+  border: 1px solid transparent;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   white-space: nowrap;
 }
 
+button:hover {
+  transform: translateY(-1.5px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.14);
+}
+
+button:active {
+  transform: translateY(0) scale(0.97);
+}
+
 .btn-secondary {
-  background: var(--surface);
-  border: 2px solid var(--accent);
-  color: var(--accent);
+  background: var(--card);
+  border-color: var(--border);
+  color: var(--text);
 }
 
 .btn-secondary:hover {
-  background: var(--accent);
-  color: #ffffff;
+  background: var(--text);
+  color: var(--background);
+  border-color: var(--text);
 }
 
 button.ai {
-  background: var(--accent);
+  background: linear-gradient(135deg, var(--accent) 0%, #3b82f6 100%);
   color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
 }
 
 button.ai:hover {
-  background: var(--accent-hover);
+  background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+  box-shadow: 0 6px 24px rgba(37, 99, 235, 0.6);
 }
 
 /* ==========================================================================
@@ -248,19 +324,24 @@ button.ai:hover {
    ========================================================================== */
 footer {
   text-align: center;
-  padding: 24px 0;
+  padding: 32px 0;
   margin-top: auto;
-  border-top: 2px solid var(--border);
-  font-size: 13px;
-  color: var(--muted);
+  border-top: 1px solid var(--border);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
 
 footer a {
-  color: var(--accent);
+  color: var(--text);
   text-decoration: none;
-  font-weight: 600;
+  font-weight: 700;
+  border-bottom: 2px solid var(--border);
+  transition: all 0.2s;
 }
 
 footer a:hover {
-  text-decoration: underline;
+  border-bottom-color: var(--text);
+  opacity: 0.8;
 }
