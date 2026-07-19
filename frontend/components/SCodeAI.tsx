@@ -9,21 +9,36 @@ type PDFItem = {
   type?: string;
 };
 
+export type AIStage = "reading" | "understanding" | "solving" | "formatting" | "idle";
+
+export type QuestionData = {
+  id: string;
+  type: "mcq" | "essay";
+  question: string;
+  options?: {
+    A: string;
+    B: string;
+    C: string;
+    D: string;
+  };
+  correct_answer?: string;
+  explanation: string;
+  solution?: string;
+};
+
 type ChatMessage = {
   role: "user" | "ai";
   content: string;
 };
 
-// Added the missing props coming from app/page.tsx to satisfy TypeScript compiler rules
 interface Props {
   pdfs: PDFItem[];
   setPdfs: (files: PDFItem[]) => void;
   solveAI: (url: string, name: string) => void;
   loadingAI: boolean;
-  aiStage?: string;      // Added to fix build error
-  questions?: any[];     // Added to fix build error
-  paperId?: string | number; // Added to fix build error
-  answer: string;
+  aiStage: AIStage;
+  questions: QuestionData[];
+  paperId: string;
   theme: "system" | "light" | "dark";
   setTheme: (theme: "system" | "light" | "dark") => void;
 }
@@ -33,10 +48,9 @@ export default function SCodeAI({
   setPdfs,
   solveAI,
   loadingAI,
-  aiStage,      // Destructured to match implementation requirements
-  questions,    // Destructured to match implementation requirements
-  paperId,      // Destructured to match implementation requirements
-  answer,
+  aiStage,
+  questions,
+  paperId,
   theme,
   setTheme
 }: Props) {
@@ -165,6 +179,7 @@ export default function SCodeAI({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          paper_id: paperId !== "default_fallback_paper_context_instance" ? paperId : undefined,
           filename: selectedPDF.name,
           question: userMessage
         })
@@ -173,7 +188,7 @@ export default function SCodeAI({
       const data = await response.json();
       setChat((prev) => [
         ...prev,
-        { role: "ai", content: data.answer || "No response received." }
+        { role: "ai", content: data.answer || data.reply || "No response received." }
       ]);
     } catch (error) {
       setChat((prev) => [...prev, { role: "ai", content: "AI connection failed." }]);
@@ -184,18 +199,16 @@ export default function SCodeAI({
 
   return (
     <div className="scode-wrapper">
-      {/* 1. Main Dynamic Layout Title */}
       <h1 className="main-title text-center font-extrabold my-2">
         Colleges of Education Past Questions
       </h1>
 
-      {/* 2. Top Navigation Header featuring Triple Branding Logos */}
       <header className="topbar">
         <div className="brand">
           <div className="top-logos flex gap-2 items-center">
-            <img src="https://raw.githubusercontent.com/SCodeGit/trial/main/WhatsApp%20Image%202025-10-29%20at%2021.29.26_b1bcd9d3.jpg" alt="Logo 1" className="h-8 w-auto object-contain" />
-            <img src="https://raw.githubusercontent.com/SCodeGit/trial/main/WhatsApp%20Image%202025-10-29%20at%2021.28.30_968e228b.jpg" alt="Logo 2" className="h-8 w-auto object-contain" />
-            <img src="https://raw.githubusercontent.com/SCodeGit/trial/main/WhatsApp%20Image%202025-10-29%20at%2021.31.34_5c11e8e8.jpg" alt="Logo 3" className="h-8 w-auto object-contain" />
+            <img src="https://raw.githubusercontent.com/SCodeGit/trial/main/WhatsApp%20Image%202025-10-29%20at%2021.29.26_b1bcd9d3.jpg" alt="Logo" className="h-8 w-auto object-contain" />
+            <img src="https://raw.githubusercontent.com/SCodeGit/trial/main/WhatsApp%20Image%202025-10-29%20at%2021.28.30_968e228b.jpg" alt="Logo" className="h-8 w-auto object-contain" />
+            <img src="https://raw.githubusercontent.com/SCodeGit/trial/main/WhatsApp%20Image%202025-10-29%20at%2021.31.34_5c11e8e8.jpg" alt="Logo" className="h-8 w-auto object-contain" />
           </div>
         </div>
 
@@ -209,36 +222,16 @@ export default function SCodeAI({
         </div>
 
         <div className="theme-toggle-group">
-          <button
-            className={`theme-btn ${theme === "light" ? "active" : ""}`}
-            onClick={() => setTheme("light")}
-            title="Light Mode"
-          >
-            ☀️
-          </button>
-          <button
-            className={`theme-btn ${theme === "dark" ? "active" : ""}`}
-            onClick={() => setTheme("dark")}
-            title="Dark Mode"
-          >
-            🌙
-          </button>
-          <button
-            className={`theme-btn ${theme === "system" ? "active" : ""}`}
-            onClick={() => setTheme("system")}
-            title="Use System Preference"
-          >
-            🖥️
-          </button>
+          <button className={`theme-btn ${theme === "light" ? "active" : ""}`} onClick={() => setTheme("light")}>☀️</button>
+          <button className={`theme-btn ${theme === "dark" ? "active" : ""}`} onClick={() => setTheme("dark")}>🌙</button>
+          <button className={`theme-btn ${theme === "system" ? "active" : ""}`} onClick={() => setTheme("system")}>🖥️</button>
         </div>
       </header>
 
-      {/* 3. Thematic Tagline Subtext */}
       <p className="tagline text-center font-semibold text-sm tracking-wide my-1">
         Empowering Learning Through Past Questions
       </p>
 
-      {/* 4. Dropdown Trainee Instruction Drawer Panel */}
       <div className="instructions-container my-2 max-w-7xl mx-auto px-4">
         <button
           className="instructions-toggle w-full py-2 px-4 rounded-lg font-bold text-center transition bg-gray-100 dark:bg-gray-800"
@@ -247,7 +240,7 @@ export default function SCodeAI({
           {showInstructions ? "Hide Instructions For Trainees" : "View Instructions For Trainees"}
         </button>
         {showInstructions && (
-          <div className="instructions-content mt-2 p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-zinc-900 transition-all">
+          <div className="instructions-content mt-2 p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-zinc-900">
             <p className="text-sm leading-relaxed">
               <strong>Trainee Guide:</strong> Use the filtering panel below to sort by University, Level, Semester, and Programme. Once the past papers load, select <strong>Solve AI</strong> to view complete step-by-step guidance on the classroom workspace panel.
             </p>
@@ -268,9 +261,7 @@ export default function SCodeAI({
                 <select onChange={(e) => selectUniversity(e.target.value)}>
                   <option value="">Select University</option>
                   {universities.map((item) => (
-                    <option key={item.path} value={item.path}>
-                      {item.name}
-                    </option>
+                    <option key={item.path} value={item.path}>{item.name}</option>
                   ))}
                 </select>
               </div>
@@ -279,9 +270,7 @@ export default function SCodeAI({
                 <select disabled={!levels.length} onChange={(e) => selectLevel(e.target.value)}>
                   <option value="">Select Level</option>
                   {levels.map((item) => (
-                    <option key={item.path} value={item.path}>
-                      {item.name}
-                    </option>
+                    <option key={item.path} value={item.path}>{item.name}</option>
                   ))}
                 </select>
               </div>
@@ -290,9 +279,7 @@ export default function SCodeAI({
                 <select disabled={!semesters.length} onChange={(e) => selectSemester(e.target.value)}>
                   <option value="">Select Semester</option>
                   {semesters.map((item) => (
-                    <option key={item.path} value={item.path}>
-                      {item.name}
-                    </option>
+                    <option key={item.path} value={item.path}>{item.name}</option>
                   ))}
                 </select>
               </div>
@@ -301,9 +288,7 @@ export default function SCodeAI({
                 <select disabled={!programmes.length} onChange={(e) => selectProgramme(e.target.value)}>
                   <option value="">Select Programme</option>
                   {programmes.map((item) => (
-                    <option key={item.path} value={item.path}>
-                      {item.name}
-                    </option>
+                    <option key={item.path} value={item.path}>{item.name}</option>
                   ))}
                 </select>
               </div>
@@ -325,9 +310,7 @@ export default function SCodeAI({
                       <h3>{pdf.name.replace(".pdf", "")}</h3>
                     </div>
                     <div className="actions">
-                      <button className="btn-secondary" onClick={() => openPDF(pdf)}>
-                        View Document
-                      </button>
+                      <button className="btn-secondary" onClick={() => openPDF(pdf)}>View Document</button>
                       <button
                         className="ai"
                         onClick={() => {
@@ -342,10 +325,6 @@ export default function SCodeAI({
                   </div>
                 ))}
               </div>
-            )}
-
-            {!loading && pdfs.length > 0 && filteredPdfs.length === 0 && (
-              <p className="empty-state">No papers found matching "{searchQuery}"</p>
             )}
 
             {!loading && pdfs.length === 0 && (
@@ -373,7 +352,7 @@ export default function SCodeAI({
           </section>
         </div>
 
-        <div className="right-column">
+        <div id="aiWorkspaceSection" className="right-column">
           <section className="ai-box">
             <div className="section-header">
               <h2>🤖 AI Classroom Solver</h2>
@@ -384,45 +363,72 @@ export default function SCodeAI({
               {loadingAI && (
                 <div className="ai-loading-state">
                   <div className="ai-pulse-scanner"></div>
-                  <p>Processing examination paper...</p>
-                  <span>Extracting text and generating answers.</span>
+                  <p className="capitalize font-bold">Status: AI is {aiStage}...</p>
+                  <span>Processing text vectors and rendering evaluation blocks.</span>
                 </div>
               )}
 
-              {/* Display custom visual cue if the parent pipeline indicates a specific dynamic evaluation step */}
-              {!loadingAI && aiStage && (
-                <div className="p-2 mb-2 text-xs rounded bg-blue-50 dark:bg-zinc-800 text-blue-600 dark:text-blue-400">
-                  Current Stage Status: {aiStage}
+              {!loadingAI && questions.length > 0 && (
+                <div className="answers-container space-y-6">
+                  {questions.map((q, idx) => (
+                    <div key={q.id || idx} className="answer-wrapper border p-4 rounded-xl mb-4 bg-white dark:bg-zinc-950">
+                      <div className="font-bold border-b pb-2 mb-2 flex justify-between items-center">
+                        <span>Question {idx + 1} ({q.type.toUpperCase()})</span>
+                      </div>
+                      <p className="my-2 font-medium">{q.question}</p>
+                      
+                      {q.options && (
+                        <div className="options-grid grid grid-cols-1 md:grid-cols-2 gap-2 my-2 text-sm">
+                          {Object.entries(q.options).map(([key, val]) => (
+                            <div key={key} className={`p-2 rounded border ${q.correct_answer === key ? 'bg-green-50 border-green-300 dark:bg-green-950/30' : ''}`}>
+                              <strong>{key}:</strong> {val}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {q.correct_answer && (
+                        <p className="text-sm text-green-600 dark:text-green-400 font-bold">
+                          Correct Answer Option: {q.correct_answer}
+                        </p>
+                      )}
+
+                      <div className="explanation-section mt-3 text-sm border-t pt-2">
+                        <strong className="text-blue-500">Step-by-Step Analysis:</strong>
+                        <p className="text-gray-600 dark:text-gray-300 mt-1">{q.explanation}</p>
+                      </div>
+
+                      {(q.solution || q.explanation) && (
+                        <div className="mt-2 text-right">
+                          <button 
+                            className="btn-copy text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded" 
+                            onClick={() => navigator.clipboard.writeText(`${q.question}\n\nSolution: ${q.solution || q.explanation}`)}
+                          >
+                            📋 Copy This Question
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
               )}
 
-              {!loadingAI && answer && (
-                <div className="answer-wrapper">
-                  <div className="answer-header">
-                    <span>Generated Solution</span>
-                    <button className="btn-copy" onClick={() => navigator.clipboard.writeText(answer)}>
-                      📋 Copy Text
-                    </button>
-                  </div>
-                  <div className="answer">{answer}</div>
-                </div>
-              )}
-
-              {selectedPDF && (
-                <div className="chat-box">
-                  <h3>💬 Ask about this paper</h3>
-                  <div className="messages">
+              {selectedPDF && !loadingAI && questions.length > 0 && (
+                <div className="chat-box mt-6 border-t pt-4">
+                  <h3>💬 Ask follow-up questions about this paper</h3>
+                  <div className="messages max-h-60 overflow-y-auto my-2 space-y-2 p-2 bg-gray-50 dark:bg-zinc-900 rounded-lg">
                     {chat.map((msg, index) => (
-                      <div key={index} className={msg.role === "user" ? "user-message" : "ai-message"}>
+                      <div key={index} className={`p-2 rounded-lg max-w-[85%] ${msg.role === "user" ? "bg-blue-500 text-white ml-auto text-right" : "bg-gray-200 dark:bg-gray-700 mr-auto text-left"}`}>
                         {msg.content}
                       </div>
                     ))}
-                    {chatLoading && <div className="ai-message">Thinking...</div>}
+                    {chatLoading && <div className="text-gray-400 text-xs italic">Thinking...</div>}
                     <div ref={messagesEndRef} />
                   </div>
 
-                  <div className="chat-input">
+                  <div className="chat-input flex gap-2">
                     <input
+                      className="flex-1 p-2 border rounded dark:bg-zinc-800"
                       value={question}
                       onChange={(e) => setQuestion(e.target.value)}
                       onKeyDown={(e) => {
@@ -430,17 +436,17 @@ export default function SCodeAI({
                       }}
                       placeholder="Ask anything about this paper..."
                     />
-                    <button onClick={sendChat}>Send</button>
+                    <button className="bg-blue-600 text-white px-4 py-2 rounded" onClick={sendChat}>Send</button>
                   </div>
                 </div>
               )}
 
-              {!loadingAI && !answer && !selectedPDF && (
+              {!loadingAI && questions.length === 0 && !selectedPDF && (
                 <div className="ai-placeholder">
                   <div className="placeholder-graphic">✨</div>
                   <h3>Ready for analysis</h3>
                   <p>
-                    Select any PDF on the left and click <strong>Solve AI</strong>. The AI will analyse the examination paper and allow you to ask follow-up questions.
+                    Select any PDF on the left and click <strong>Solve AI</strong>. The AI pipeline will process the document sequentially.
                   </p>
                 </div>
               )}
@@ -449,10 +455,10 @@ export default function SCodeAI({
         </div>
       </div>
 
-      <footer>
+      <footer className="mt-8 border-t pt-4 text-center text-xs text-gray-400">
         <p>
           © {new Date().getFullYear()} SCode Academic AI • ATUBRA ABRAHAM •{" "}
-          <a href="https://scodegit.github.io/scode.git.io/" target="_blank" rel="noopener noreferrer">
+          <a href="https://scodegit.github.io/scode.git.io/" target="_blank" rel="noopener noreferrer" className="underline">
             SCode GitHub
           </a>
         </p>
