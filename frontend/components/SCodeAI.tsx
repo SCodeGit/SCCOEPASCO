@@ -545,7 +545,7 @@ export default function SCodeAI({
                   <div className="placeholder-graphic">✨</div>
                   <h3>Ready for analysis</h3>
                   <p>
-                    Select any PDF on the left and click <strong>Solve AI</strong>. The AI will analyze the examination paper and break down questions dynamically.
+                    Select any PDF and click <strong>Solve AI</strong>. The AI will analyze the examination paper and break down questions dynamically.
                   </p>
                 </div>
               )}
@@ -558,7 +558,7 @@ export default function SCodeAI({
         <p>
           © {new Date().getFullYear()} SCode Academic AI •{" "}
           <a href="https://scodegit.github.io/scode.git.io/" target="_blank" rel="noopener noreferrer">
-            SCode 
+            SCode
           </a>
         </p>
       </footer>
