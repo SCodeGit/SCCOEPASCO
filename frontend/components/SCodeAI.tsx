@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { fetchFolder } from "@/lib/github";
 import { AIStage, QuestionData } from "../app/page";
 
@@ -52,6 +52,8 @@ export default function SCodeAI({
   const [chatLoading, setChatLoading] = useState(false);
   const [activeQuestionTab, setActiveQuestionTab] = useState<string>("");
 
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
   useEffect(() => {
     loadUniversities();
   }, []);
@@ -61,6 +63,11 @@ export default function SCodeAI({
       setActiveQuestionTab(questions[0].id);
     }
   }, [questions]);
+
+  // Auto-scrolling window helper for the workspace chat box
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chat, chatLoading]);
 
   async function loadUniversities() {
     try {
@@ -308,7 +315,7 @@ export default function SCodeAI({
                           solveAI(getPDFUrl(pdf), pdf.name);
                         }}
                       >
-                        🤖 Solve AI
+                         Solve with AI
                       </button>
                     </div>
                   </div>
@@ -347,11 +354,10 @@ export default function SCodeAI({
 
               {!loadingAI && questions.length > 0 && (
                 <div className="answer-wrapper">
-                  {/* Dynamic Question Tab Bar Selector */}
                   <div className="question-tabs" style={{ display: "flex", gap: "8px", overflowX: "auto", paddingBottom: "12px", borderBottom: "1px solid var(--border)", marginBottom: "16px" }}>
                     {questions.map((q, idx) => (
                       <button
-                        key={q.id}
+                        key={q.id || `q-${idx}`}
                         onClick={() => setActiveQuestionTab(q.id)}
                         className={`tab-btn ${activeQuestionTab === q.id ? "active" : ""}`}
                         style={{
@@ -434,6 +440,7 @@ export default function SCodeAI({
                         SCodeAI Thinking...
                       </div>
                     )}
+                    <div ref={messagesEndRef} />
                   </div>
 
                   <div className="chat-input" style={{ display: "flex", gap: "8px" }}>
