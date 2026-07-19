@@ -14,11 +14,15 @@ type ChatMessage = {
   content: string;
 };
 
+// Added the missing props coming from app/page.tsx to satisfy TypeScript compiler rules
 interface Props {
   pdfs: PDFItem[];
   setPdfs: (files: PDFItem[]) => void;
   solveAI: (url: string, name: string) => void;
   loadingAI: boolean;
+  aiStage?: string;      // Added to fix build error
+  questions?: any[];     // Added to fix build error
+  paperId?: string | number; // Added to fix build error
   answer: string;
   theme: "system" | "light" | "dark";
   setTheme: (theme: "system" | "light" | "dark") => void;
@@ -29,6 +33,9 @@ export default function SCodeAI({
   setPdfs,
   solveAI,
   loadingAI,
+  aiStage,      // Destructured to match implementation requirements
+  questions,    // Destructured to match implementation requirements
+  paperId,      // Destructured to match implementation requirements
   answer,
   theme,
   setTheme
@@ -382,6 +389,13 @@ export default function SCodeAI({
                 </div>
               )}
 
+              {/* Display custom visual cue if the parent pipeline indicates a specific dynamic evaluation step */}
+              {!loadingAI && aiStage && (
+                <div className="p-2 mb-2 text-xs rounded bg-blue-50 dark:bg-zinc-800 text-blue-600 dark:text-blue-400">
+                  Current Stage Status: {aiStage}
+                </div>
+              )}
+
               {!loadingAI && answer && (
                 <div className="answer-wrapper">
                   <div className="answer-header">
@@ -439,7 +453,7 @@ export default function SCodeAI({
         <p>
           © {new Date().getFullYear()} SCode Academic AI • ATUBRA ABRAHAM •{" "}
           <a href="https://scodegit.github.io/scode.git.io/" target="_blank" rel="noopener noreferrer">
-            SCode  
+            SCode GitHub
           </a>
         </p>
       </footer>
