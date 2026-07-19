@@ -27,6 +27,87 @@ interface Props {
   setTheme: (theme: "system" | "light" | "dark") => void;
 }
 
+// Structured UI block format for messy text strings
+interface ParsedContent {
+  questionText: string;
+  options: Record<string, string>;
+  correctAnswer: string;
+  explanation: string;
+}
+
+/**
+ * Parses messy, markdown-heavy strings returned in backend solutions
+ * and cleanly isolates the components for standard UI rendering.
+ */
+function parseMessySolution(rawString: string, activeQ: QuestionData): ParsedContent {
+  if (!rawString) {
+    return {
+      questionText: activeQ.question || "",
+      options: activeQ.options || {},
+      correctAnswer: activeQ.correct_answer || "",
+      explanation: ""
+    };
+  }
+
+  // Remove bold markdown styling variations inside key titles
+  let cleanStr = rawString
+    .replace(/\*\*Answer:\*\*/gi, "Answer:")
+    .replace(/\*\*Correct Answer:\*\*/gi, "Answer:")
+    .replace(/\*\*Explanation:\*\*/gi, "Explanation:")
+    .replace(/Correct Answer:\s*/gi, "Answer: ");
+
+  let questionText = activeQ.question || "";
+  let options: Record<string, string> = { ...(activeQ.options || {}) };
+  let correctAnswer = activeQ.correct_answer || "";
+  let explanation = "";
+
+  // 1. Extract Explanation Block
+  if (cleanStr.includes("Explanation:")) {
+    const parts = cleanStr.split("Explanation:");
+    explanation = parts[1].trim();
+    cleanStr = parts[0];
+  }
+
+  // 2. Extract Answer Block
+  if (cleanStr.includes("Answer:")) {
+    const parts = cleanStr.split("Answer:");
+    correctAnswer = parts[1].replace(/^[A-D]\.\s*/i, "").trim();
+    // Strip trailing stars or dots if present
+    correctAnswer = correctAnswer.replace(/^[:\s*–-]+/, "").trim();
+    cleanStr = parts[0];
+  }
+
+  // 3. Extract and Parse Options (if they were dumped inline into the string text)
+  const optionRegex = /(?:^|\n)\s*[*+-]?\s*\*\*?([A-D])\.\*\*?\s*([^\n]+)/g;
+  let match;
+  let hasParsedOptions = false;
+  
+  while ((match = optionRegex.exec(cleanStr)) !== null) {
+    hasParsedOptions = true;
+    options[match[1].toUpperCase()] = match[2].trim();
+  }
+
+  // 4. Clean up any remaining question headers or prefix digits left over
+  if (hasParsedOptions) {
+    const firstOptionIdx = cleanStr.search(/(?:^|\n)\s*[*+-]?\s*\*\*?[A-D]\./);
+    if (firstOptionIdx !== -1) {
+      questionText = cleanStr.substring(0, firstOptionIdx).trim();
+    }
+  } else if (cleanStr.trim() && !activeQ.question) {
+    questionText = cleanStr.trim();
+  }
+
+  // Strip question number markers like "**21. " out of the finalized header text
+  questionText = questionText.replace(/^\s*\*\*?\d+\.\s*\*\*?/, "").trim();
+
+  return {
+    questionText,
+    options,
+    correctAnswer: correctAnswer || activeQ.correct_answer || "",
+    explanation: explanation || cleanStr.trim()
+  };
+}
+
 export default function SCodeAI({
   pdfs,
   setPdfs,
@@ -52,7 +133,6 @@ export default function SCodeAI({
   const [chatLoading, setChatLoading] = useState(false);
   const [activeQuestionTab, setActiveQuestionTab] = useState<string>("");
 
-  // Refs for auto-scrolling layout zones
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const workspaceRef = useRef<HTMLDivElement | null>(null);
 
@@ -66,7 +146,6 @@ export default function SCodeAI({
     }
   }, [questions]);
 
-  // Auto-scrolling window helper for the workspace chat box
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chat, chatLoading]);
@@ -122,7 +201,7 @@ export default function SCodeAI({
     setProgrammes([]);
     setPdfs([]);
     if (!path) return;
-    await loadFolder(path, setProgrammes);
+    await loadFolder(path, setSemesters);
   }
 
   async function selectProgramme(path: string) {
@@ -155,13 +234,11 @@ export default function SCodeAI({
     window.open(url, "_blank");
   }
 
-  // Triggered when clicking "Solve with AI"
   function handleSolveAI(pdf: PDFItem) {
     setSelectedPDF(pdf);
     setChat([]);
     solveAI(getPDFUrl(pdf), pdf.name);
     
-    // Smooth scroll down to the right column workspace instantly
     if (workspaceRef.current) {
       workspaceRef.current.scrollIntoView({
         behavior: "smooth",
@@ -206,6 +283,11 @@ export default function SCodeAI({
   }
 
   const activeQuestion = questions.find((q) => q.id === activeQuestionTab);
+  
+  // Clean up data formatting constraints on execution loop
+  const parsedData = activeQuestion 
+    ? parseMessySolution(activeQuestion.solution || activeQuestion.explanation || "", activeQuestion)
+    : null;
 
   return (
     <div className="scode-wrapper">
@@ -346,7 +428,6 @@ export default function SCodeAI({
           </section>
         </div>
 
-        {/* Bound the workspaceRef directly to the target element container */}
         <div className="right-column" ref={workspaceRef}>
           <section className="ai-box">
             <div className="section-header">
@@ -377,22 +458,29 @@ export default function SCodeAI({
                     ))}
                   </div>
 
-                  {activeQuestion && (
+                  {activeQuestion && parsedData && (
                     <div className="active-question-view">
                       <div className="answer-header">
                         <span className="workspace-query-label">Active Workspace Query Element</span>
-                        <button className="btn-copy" onClick={() => navigator.clipboard.writeText(activeQuestion.solution || activeQuestion.explanation)}>
+                        <button 
+                          className="btn-copy" 
+                          onClick={() => navigator.clipboard.writeText(
+                            `Question: ${parsedData.questionText}\n` +
+                            `Answer: ${parsedData.correctAnswer}\n` +
+                            `Explanation: ${parsedData.explanation}`
+                          )}
+                        >
                           📋 Copy answers and work more on it
                         </button>
                       </div>
 
                       <div className="question-body">
                         <h4 className="context-title">Question Context:</h4>
-                        <p className="context-text">{activeQuestion.question}</p>
+                        <p className="context-text">{parsedData.questionText}</p>
                         
-                        {activeQuestion.options && (
+                        {Object.keys(parsedData.options).length > 0 && (
                           <div className="options-block">
-                            {Object.entries(activeQuestion.options).map(([key, val]) => (
+                            {Object.entries(parsedData.options).map(([key, val]) => (
                               <div key={key} className="option-item">
                                 <strong>{key}:</strong> {val}
                               </div>
@@ -402,14 +490,14 @@ export default function SCodeAI({
                       </div>
 
                       <div className="answer">
-                        {activeQuestion.correct_answer && (
-                          <p className="correct-choice-row">
+                        {parsedData.correctAnswer && (
+                          <div className="correct-choice-row">
                             <strong className="accent-label">Correct Answer Choice: </strong> 
-                            <span className="badge-choice">{activeQuestion.correct_answer}</span>
-                          </p>
+                            <span className="badge-choice">{parsedData.correctAnswer}</span>
+                          </div>
                         )}
                         <h4 className="solution-title">Analytical Core Solution:</h4>
-                        <div className="solution-output">{activeQuestion.solution || activeQuestion.explanation}</div>
+                        <div className="solution-output">{parsedData.explanation}</div>
                       </div>
                     </div>
                   )}
@@ -455,9 +543,9 @@ export default function SCodeAI({
               {!loadingAI && questions.length === 0 && !selectedPDF && (
                 <div className="ai-placeholder">
                   <div className="placeholder-graphic">✨</div>
-                  <h3>Good for analysis</h3>
+                  <h3>Ready for analysis</h3>
                   <p>
-                    Select any PDF  and click <strong>Solve AI</strong>. The AI will analyze the examination paper and break down questions dynamically.
+                    Select any PDF on the left and click <strong>Solve AI</strong>. The AI will analyze the examination paper and break down questions dynamically.
                   </p>
                 </div>
               )}
@@ -470,7 +558,7 @@ export default function SCodeAI({
         <p>
           © {new Date().getFullYear()} SCode Academic AI •{" "}
           <a href="https://scodegit.github.io/scode.git.io/" target="_blank" rel="noopener noreferrer">
-            SCode
+            SCode 
           </a>
         </p>
       </footer>
