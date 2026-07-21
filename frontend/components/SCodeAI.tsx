@@ -200,7 +200,7 @@ export default function SCodeAI({
   return (
     <div className="scode-wrapper">
       <h1 className="main-title text-center font-extrabold my-2">
-        Colleges of Education Past Questions
+        Colleges of Education Past Question
       </h1>
 
       <header className="topbar">
